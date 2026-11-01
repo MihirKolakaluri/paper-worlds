@@ -8,7 +8,7 @@ export const Level = z.object({
   height: z.number().int().positive(),
   tileSize: z.literal(8),
   image: z.string().optional(),
-  spawn: z.object({ x: z.number(), y: z.number() }),
+  spawn: z.object({ x: z.number(), y: z.number(), w: z.number().positive().optional(), h: z.number().positive().optional() }),
   goal: z.object({ x: z.number(), y: z.number(), w: z.number().positive(), h: z.number().positive() }),
   solid: grid,
   lava: grid,
