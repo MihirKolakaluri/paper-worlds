@@ -37,25 +37,34 @@ export const POST = guarded(async (req: Request) => {
   const { image, w, h } = parsed.data;
 
   const t0 = Date.now();
-  let text: string;
-  try {
-    const resp = await meta().responses.create({
-      model: MODELS.spark,
-      input: [{ type: "message", role: "user", content: [
-        { type: "input_text", text: prompt(w, h) },
-        { type: "input_image", image_url: image, detail: "auto" },
-      ] }],
-      text: { format: { type: "json_schema", name: "level_marks", schema: SCHEMA, strict: true } },
-      max_output_tokens: 4000,
-    });
-    text = resp.output_text;
-  } catch (e) {
-    console.error("read-level spark error", e);
-    return Response.json({ error: "The AI didn't answer. Wait a moment and try again." }, { status: 502 });
+  type Parsed = z.infer<typeof Marks>;
+  let data: Parsed | null = null;
+  for (let attempt = 1; attempt <= 2 && !data; attempt++) {
+    let text = "";
+    try {
+      const resp = await meta().responses.create({
+        model: MODELS.spark,
+        input: [{ type: "message", role: "user", content: [
+          { type: "input_text", text: prompt(w, h) },
+          { type: "input_image", image_url: image, detail: "auto" },
+        ] }],
+        text: { format: { type: "json_schema", name: "level_marks", schema: SCHEMA, strict: true } },
+        max_output_tokens: 6000,
+      });
+      text = resp.output_text;
+      if (!text) console.error(`read-level attempt ${attempt} empty output`, resp.status, JSON.stringify(resp.incomplete_details ?? null), JSON.stringify(resp.usage ?? null));
+    } catch (e) {
+      console.error(`read-level attempt ${attempt} spark error`, e);
+      if (attempt === 2) return Response.json({ error: "The AI didn't answer. Wait a moment and try again." }, { status: 502 });
+      continue;
+    }
+    const out = Marks.safeParse((() => { try { return JSON.parse(text); } catch { return null; } })());
+    if (out.success) data = out.data;
+    else console.error(`read-level attempt ${attempt} unparsable output:`, text.slice(0, 500));
   }
   const ms = Date.now() - t0;
-  const out = Marks.safeParse((() => { try { return JSON.parse(text); } catch { return null; } })());
-  if (!out.success) return Response.json({ error: "I couldn't read that drawing. Try a clearer photo." }, { status: 502 });
+  if (!data) return Response.json({ error: "I couldn't read that drawing. Try again, or snap a clearer photo." }, { status: 502 });
+  const out = { data };
 
   const kinds = new Set(out.data.marks.map(m => m.kind));
   if (!kinds.has("spawn")) return Response.json({ error: "I couldn't find the stick figure. Draw one where the player starts and snap again." }, { status: 422 });
