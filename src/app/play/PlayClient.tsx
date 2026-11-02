@@ -44,22 +44,24 @@ export default function PlayClient() {
     <main className={s.wrap}>
       <header className={s.top}>
         <Link href="/" className={s.back}>← New drawing</Link>
-        <span className={s.stat}>Falls: {deaths}</span>
+        <span className={s.stat} aria-live="polite">Falls: {deaths}</span>
         <button className={s.small} onClick={() => hooks?.restart()}>Restart (R)</button>
       </header>
       {level.warnings.length > 0 && !hideWarn && (
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
       <div className={s.stage}><Game level={level} onReady={onReady} /></div>
-      <p className={s.help}>Arrow keys or WASD to move, Space to jump. Reach the flag, avoid the lava.</p>
+      <p className={s.help}>Arrow keys or WASD to move, Space to jump (tap for a small hop). Reach the flag, dodge the lava.</p>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (
         <div className={s.win} role="dialog" aria-label="You win">
-          <h2>You made it! 🎉</h2>
-          <p>{deaths === 0 ? "No falls. Nice." : `${deaths} fall${deaths === 1 ? "" : "s"} on the way.`}</p>
-          <div className={s.row}>
-            <button className={s.btn} onClick={() => { setDeaths(0); hooks?.restart(); }}>Play again</button>
-            <Link className={s.btnGhost} href="/">Draw a new level</Link>
+          <div className={s.card}>
+            <h2>You made it!</h2>
+            <p>{deaths === 0 ? "No falls. Nice." : `${deaths} fall${deaths === 1 ? "" : "s"} on the way.`}</p>
+            <div className={s.row}>
+              <button className={s.btn} autoFocus onClick={() => { setDeaths(0); hooks?.restart(); }}>Play again</button>
+              <Link className={s.btnGhost} href="/">Draw a new level</Link>
+            </div>
           </div>
         </div>
       )}

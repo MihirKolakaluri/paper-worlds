@@ -1,4 +1,4 @@
-:root { --bg: #fffdf7; --fg: #1a1a1a; }
-@media (prefers-color-scheme: dark) { :root { --bg: #141414; --fg: #f2f0ea; } }
+:root { --bg: #fffdf7; --fg: #1a1a1a; --desk: #ece5d6; --paper: #fbf7ee; --ink: #1f2433; }
+@media (prefers-color-scheme: dark) { :root { --bg: #141414; --fg: #f2f0ea; --desk: #1c1a17; } }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-geist-sans), system-ui, sans-serif; }

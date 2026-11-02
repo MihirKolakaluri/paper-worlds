@@ -13,5 +13,7 @@ export const Level = z.object({
   solid: grid,
   lava: grid,
   warnings: z.array(z.string()),
+  /** Full jump height in px, tuned so the drawn level is beatable. Missing = default from the figure size. */
+  jumpH: z.number().positive().optional(),
 });
 export type Level = z.infer<typeof Level>;

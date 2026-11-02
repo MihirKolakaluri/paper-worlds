@@ -2,6 +2,8 @@
 // Flow: photo -> paperQuad (auto corners, user can drag) -> warp (flat page) -> cropToInk
 //       -> Spark marks (server) -> buildLevel: pixels inside each Spark box give the exact platform line.
 import type { Level } from "@/schema/level";
+import { checkReach } from "@/game/reach";
+import { physicsFor } from "@/game/physics";
 
 export const T = 8; // tile size in px on the flat page
 export type Img = { data: Uint8ClampedArray; width: number; height: number };
@@ -255,11 +257,43 @@ export function buildLevel(img: Img, marks: Mark[], markW: number, markH: number
   const goal = !gl ? { x: cols - 4, y: 2, w: 3, h: 4 } : gl.snapped
     ? { x: gl.c0, y: gl.r0, w: gl.c1 - gl.c0 + 1, h: gl.r1 - gl.r0 + 1 }
     : { x: gl.c - 1, y: gl.r - 2, w: 3, h: 4 };
+  if (sp?.snapped) widenLedge(solid, lava, spawn);
   const level: Level = { width: cols, height: rows, tileSize: 8, image, spawn, goal, solid, lava, warnings };
+  if (sp && gl && solid.some(row => row.some(Boolean))) {
+    const reach = tuneJump(level);
+    if (!reach.landed) warnings.push("The stick figure has nothing to stand on, so you start by falling. Draw a line under it.");
+    else if (!reach.reachable) warnings.push("I couldn't find a way to reach the flag. Try drawing the platforms a bit closer together.");
+  }
 
   let error: string | undefined;
   if (!sp) error = "I couldn't find the stick figure. Draw one where the player starts and snap again.";
   else if (!gl) error = "I couldn't find the flag. Draw a flag and snap again.";
   else if (!solid.some(row => row.some(Boolean))) error = "I couldn't find any platforms. Draw lines with a dark pen and snap again.";
   return { level, error };
+}
+
+/** The line under the stick figure is often a short dash. Make it at least 5 tiles wide so the first jump is fair. */
+export function widenLedge(solid: boolean[][], lava: boolean[][], spawn: { x: number; y: number; h?: number }) {
+  const rows = solid.length, cols = solid[0]?.length ?? 0, cx = Math.floor(spawn.x);
+  const lo = Math.max(1, Math.floor(spawn.y)), hi = Math.min(rows - 1, Math.floor(spawn.y + (spawn.h ?? 6) + 3));
+  for (let r = lo; r <= hi; r++) {
+    if (![-1, 0, 1].some(d => solid[r][cx + d])) continue;
+    for (let c = Math.max(0, cx - 2); c <= Math.min(cols - 1, cx + 2); c++) if (!lava[r][c] && !lava[r - 1][c] && !solid[r - 1][c]) solid[r][c] = true;
+    return;
+  }
+}
+
+/** Kids space platforms by eye, relative to their figure. If the default jump can't reach the flag, raise it
+ *  step by step (up to 3.2 figure heights) and keep the smallest jump that works, so the level stays a challenge. */
+export function tuneJump(level: Level) {
+  let reach = checkReach(level);
+  if (!reach.landed || reach.reachable) return reach;
+  const { figH, jumpH } = physicsFor(level.spawn.h, level.tileSize);
+  for (let h = jumpH * 1.1; h <= Math.max(jumpH, figH * 3.2); h *= 1.1) {
+    level.jumpH = Math.round(h);
+    reach = checkReach(level);
+    if (reach.reachable) { level.jumpH = Math.round(h * 1.05); return reach; } // a little slack for real hands
+  }
+  delete level.jumpH;
+  return checkReach(level);
 }

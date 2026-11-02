@@ -1,10 +1,12 @@
-// PlayScene: the drawing is the background, an invisible 8 px tilemap built from Level.solid/lava does the
-// physics. Phaser is passed in (it is loaded with a dynamic import on the client only).
+// PlayScene: the kid's drawing, cleaned up (art.ts), is what you see; an invisible 8 px tilemap built from
+// Level.solid/lava does the physics. Phaser is passed in (it is loaded with a dynamic import on the client only).
 import type { Level } from "@/schema/level";
 import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 import type { GameEvent, GameState, Hooks, HudEvent } from "./hooks";
 import { clampRaise, clampSpeed, rulesFor, type Active } from "./rules";
+import { buildArt, PAPER } from "./art";
+import { BUFFER_MS, COYOTE_MS, GRAVITY, physicsFor } from "./physics";
 
 type PhaserNS = typeof import("phaser");
 type Arcade = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
@@ -12,10 +14,7 @@ type Arcade = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 
 export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game: Phaser.Game; hooks: Hooks } {
   const T = level.tileSize, W = level.width * T, H = level.height * T;
-  // Size everything from the kid's own stick figure, so a big drawing gets a big player and big jumps.
-  const figH = Math.max(24, Math.min(96, (level.spawn.h ?? 6) * T));
-  const PH = Math.round(Math.max(16, Math.min(44, figH * 0.6))), PW = Math.round(PH * 0.55);
-  const GRAVITY = 1300, JUMP = Math.sqrt(2 * GRAVITY * Math.max(72, figH * 1.7)), RUN = Math.max(130, Math.min(280, figH * 3.2));
+  const { PH, PW, JUMP, RUN } = physicsFor(level.spawn.h, T, level.jumpH);
   const tickCbs = new Set<(s: GameState) => void>(), eventCbs = new Set<(e: HudEvent) => void>();
   const fire = (e: HudEvent) => eventCbs.forEach(cb => cb(e));
   let scene: PlayScene | null = null;
@@ -52,31 +51,43 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     movers = new Map<string, { body: Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body }; tx: number; ty: number }>();
     moverGroup!: Phaser.Physics.Arcade.Group;
     extraTiles: [number, number][] = [];
+    hero!: Phaser.GameObjects.Image;
+    heroScale = 1;
+    squash = 0; // >0 squashes on landing, <0 stretches
+    wasGrounded = true;
+    lastGrounded = 0;
+    jumpPressedAt = -1e9;
+    jumpHeld = false;
+    cut = false; // short hop already applied this jump
+    intro = false;
+    glow!: Phaser.GameObjects.Image;
+    dust!: Phaser.GameObjects.Particles.ParticleEmitter;
+    confetti!: Phaser.GameObjects.Particles.ParticleEmitter;
 
     constructor() { super("play"); }
 
-    preload() { if (level.image) this.load.image("bg", level.image); }
+    preload() { if (level.image) this.load.image("photo", level.image); }
 
     create() {
       // eslint-disable-next-line @typescript-eslint/no-this-alias -- hooks reach the live scene through this
       scene = this;
       this.physics.world.setBounds(0, 0, W, H);
       this.physics.world.setBoundsCollision(true, true, true, false); // fall off the bottom = die
-      this.cameras.main.setBounds(0, 0, W, H).setBackgroundColor("#fffdf7");
-      if (level.image) this.add.image(0, 0, "bg").setOrigin(0).setDisplaySize(W, H);
-      else this.drawFixtureArt();
-
-      // cover the drawn stick figure: the real player "steps out" of the paper
-      if (level.image) {
-        const px = Math.max(0, Math.floor((level.spawn.x - 4) * T)), py = Math.floor(level.spawn.y * T + 2 * T);
-        const src = this.textures.get("bg").getSourceImage() as HTMLImageElement;
-        const c = this.textures.getPixel(Math.floor(px * src.width / W), Math.floor(py * src.height / H), "bg");
-        const color = c ? P.Display.Color.GetColor(c.red, c.green, c.blue) : 0xf4f0e6;
-        const sw = ((level.spawn.w ?? 4) + 3) * T, top = level.spawn.y * T - T;
-        let bottom = top; // down to the ground under the figure
-        for (let r = Math.floor(level.spawn.y); r < level.height; r++) { if (level.solid[r]?.[Math.floor(level.spawn.x)]) break; bottom = (r + 1) * T; }
-        this.add.rectangle(level.spawn.x * T - sw / 2, top, sw, Math.max(T, bottom - top - 2), color).setOrigin(0);
-      }
+      this.cameras.main.setBounds(0, 0, W, H).setBackgroundColor(PAPER);
+      const photo = level.image ? (this.textures.get("photo").getSourceImage() as HTMLImageElement) : null;
+      const art = buildArt(level, photo);
+      this.textures.addCanvas("paper", art.paper); this.textures.addCanvas("ink", art.ink); this.textures.addCanvas("lavaArt", art.lava);
+      this.textures.addCanvas("glow", art.glow); this.textures.addCanvas("hero", art.hero); this.textures.addCanvas("flag", art.flag);
+      this.add.image(0, 0, "paper").setOrigin(0);
+      const shadow = this.add.image(2, 3, "ink").setOrigin(0).setTint(0x000000).setAlpha(0.13);
+      this.glow = this.add.image(0, -T, "glow").setOrigin(0).setScale(T / 2).setTint(0xff8a1e).setAlpha(0.3);
+      const lavaImg = this.add.image(0, 0, "lavaArt").setOrigin(0);
+      const inkImg = this.add.image(0, 0, "ink").setOrigin(0);
+      // the drawn flag waves from the bottom of its pole
+      const flag = this.add.image(art.flagAt.x, art.flagAt.y + art.flag.height, "flag").setOrigin(0, 1);
+      this.tweens.add({ targets: flag, scaleX: 0.9, angle: -2, duration: 700, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+      this.tweens.add({ targets: this.glow, alpha: 0.55, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+      this.makeParticles(art.lavaTops);
 
       // tiles: index 1 solid, 2 lava; drawn faintly only in debug mode (press D)
       const g = this.make.graphics({ x: 0, y: 0 }, false);
@@ -95,14 +106,17 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       pg.fillStyle(0x1d4ed8).fillCircle(PW / 2, hr, hr).fillRect(PW * 0.2, hr * 2, PW * 0.6, PH * 0.42)
         .fillRect(PW * 0.15, PH * 0.72, lw, PH * 0.28).fillRect(PW * 0.85 - lw, PH * 0.72, lw, PH * 0.28);
       pg.generateTexture("player", PW, PH); pg.destroy();
-      this.player = this.physics.add.sprite(0, 0, "player") as Arcade;
+      this.player = this.physics.add.sprite(0, 0, "player").setVisible(false) as Arcade;
+      // the kid's own stick figure is the hero; the invisible box above does the physics
+      this.hero = this.add.image(0, 0, "hero").setOrigin(0.5, 1).setDepth(5);
+      this.heroScale = (PH * 1.2) / art.hero.height;
       this.player.body.setSize(PW, PH); this.player.body.setMaxVelocity(RUN * 3, JUMP * 1.8);
       this.physics.world.gravity.y = GRAVITY;
       this.physics.add.collider(this.player, this.layer);
       this.moverGroup = this.physics.add.group({ allowGravity: false, immovable: true });
       this.physics.add.collider(this.player, this.moverGroup);
 
-      this.lavaGfx = this.add.graphics();
+      this.lavaGfx = this.add.graphics().setDepth(4);
       const goal = this.add.zone(level.goal.x * T, level.goal.y * T, level.goal.w * T, level.goal.h * T).setOrigin(0);
       this.physics.add.existing(goal, true);
       this.physics.add.overlap(this.player, goal, () => this.win());
@@ -114,6 +128,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
       this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
       this.spawn();
+      if (photo) this.playIntro([shadow, inkImg, lavaImg, this.glow, flag]);
       pending.splice(0).forEach(f => f(this));
       fire({ type: "start" });
     }
@@ -123,28 +138,66 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.layer.forEachTile(t => { if (t.index === 1) t.setCollision(false, false, !this.flipped, this.flipped); else t.setCollision(false); });
     }
 
-    drawFixtureArt() {
-      const g = this.add.graphics();
-      level.solid.forEach((row, r) => row.forEach((s, c) => { if (s) g.fillStyle(0x222222).fillRect(c * T, r * T + 3, T, 2); }));
-      level.lava.forEach((row, r) => row.forEach((l, c) => { if (l) g.fillStyle(0xe03131, 0.85).fillRect(c * T, r * T, T, T); }));
-      const gx = level.goal.x * T, gy = level.goal.y * T;
-      g.lineStyle(2, 0x222222).lineBetween(gx + 2, gy, gx + 2, gy + level.goal.h * T);
-      g.fillStyle(0x222222).fillTriangle(gx + 3, gy, gx + 3 + level.goal.w * T, gy + 6, gx + 3, gy + 12);
+    makeParticles(lavaTops: [number, number][]) {
+      const dot = this.make.graphics({ x: 0, y: 0 }, false);
+      dot.fillStyle(0xffffff).fillCircle(4, 4, 4); dot.generateTexture("dot", 8, 8); dot.destroy();
+      const chip = this.make.graphics({ x: 0, y: 0 }, false);
+      chip.fillStyle(0xffffff).fillRect(0, 0, 6, 10); chip.generateTexture("chip", 6, 10); chip.destroy();
+      if (lavaTops.length) {
+        const source = { getRandomPoint: (pt: Phaser.Types.Math.Vector2Like) => { const q = lavaTops[(Math.random() * lavaTops.length) | 0]; pt.x = q[0] + (Math.random() - 0.5) * T; pt.y = q[1]; } };
+        this.add.particles(0, 0, "dot", {
+          emitZone: { type: "random", source }, frequency: Math.max(40, 2400 / lavaTops.length), lifespan: { min: 700, max: 1400 },
+          speedY: { min: -60, max: -25 }, speedX: { min: -10, max: 10 }, scale: { start: 0.55, end: 0 }, alpha: { start: 0.9, end: 0 },
+          tint: [0xffb02e, 0xff6a1a, 0xffd35c], blendMode: "ADD", gravityY: -10,
+        }).setDepth(4);
+      }
+      this.dust = this.add.particles(0, 0, "dot", {
+        emitting: false, lifespan: 380, speedX: { min: -70, max: 70 }, speedY: { min: -50, max: -10 }, gravityY: 120,
+        scale: { start: 0.6, end: 0 }, alpha: { start: 0.45, end: 0 }, tint: 0x9a8f7c,
+      }).setDepth(6);
+      this.confetti = this.add.particles(0, 0, "chip", {
+        emitting: false, lifespan: 1600, speed: { min: 150, max: 420 }, angle: { min: 220, max: 320 }, gravityY: 600,
+        rotate: { start: 0, end: 540 }, scale: { min: 0.6, max: 1.1 }, tint: [0xe5383b, 0x1d4ed8, 0xf4b400, 0x16a34a, 0x9333ea],
+      }).setDepth(7);
+    }
+
+    /** The messy photo melts into the clean page, the lines draw in, then the figure pops off the paper. */
+    playIntro(drawn: Phaser.GameObjects.Image[]) {
+      this.intro = true; this.physics.pause();
+      this.tweens.killTweensOf(this.hero); this.hero.setScale(0).setPosition(this.player.x, this.player.body.bottom);
+      const photoImg = this.add.image(0, 0, "photo").setOrigin(0).setDisplaySize(W, H).setDepth(20);
+      const wipe = this.make.graphics({ x: 0, y: 0 }, false), state = { w: 0 };
+      const mask = wipe.createGeometryMask(); drawn.forEach(d => d.setMask(mask));
+      const draw = () => { wipe.clear().fillStyle(0xffffff).fillRect(0, 0, state.w, H); };
+      draw();
+      const done = () => {
+        if (!this.intro) return; this.intro = false;
+        this.tweens.killTweensOf([photoImg, state, this.hero]);
+        photoImg.destroy(); drawn.forEach(d => d.clearMask()); wipe.destroy();
+        this.hero.setScale(this.heroScale); this.physics.resume();
+      };
+      this.tweens.add({ targets: photoImg, alpha: 0, delay: 650, duration: 650, ease: "Sine.in" });
+      this.tweens.add({ targets: state, w: W, delay: 750, duration: 900, ease: "Sine.inOut", onUpdate: draw });
+      this.tweens.add({ targets: this.hero, scale: this.heroScale, delay: 1650, duration: 420, ease: "Back.out", onComplete: done });
+      this.input.keyboard!.once("keydown", done);
+      this.input.once("pointerdown", done);
     }
 
     spawn() {
       this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
-      this.dead = false;
+      this.dead = false; this.cut = false; this.jumpPressedAt = -1e9;
+      if (this.hero && !this.intro) { this.hero.clearTint().setAlpha(1).setScale(0); this.tweens.add({ targets: this.hero, scale: this.heroScale, duration: 260, ease: "Back.out" }); }
     }
 
     die() {
       if (this.dead || this.won) return;
       this.dead = true; this.deaths++;
-      this.cameras.main.shake(120, 0.006);
-      this.player.setTint(0xff3333);
+      this.cameras.main.shake(140, 0.008); this.cameras.main.flash(160, 255, 90, 70);
+      this.hero.setTint(0xff3b3b);
+      this.tweens.add({ targets: this.hero, alpha: 0.2, duration: 400 });
       fire({ type: "die" });
       this.runRules(r => r.trigger.type === "touch" && r.trigger.target === "lava");
-      this.time.delayedCall(450, () => { this.player.clearTint(); this.spawn(); });
+      this.time.delayedCall(450, () => this.spawn());
     }
 
     win() {
@@ -152,6 +205,8 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.runRules(r => r.trigger.type === "touch" && r.trigger.target === "goal");
       this.won = true;
       this.player.setVelocity(0, 0); this.player.body.setAllowGravity(false);
+      this.confetti.explode(70, this.player.x, this.player.y - PH);
+      this.tweens.add({ targets: this.hero, y: this.hero.y - 18, duration: 220, yoyo: true, repeat: 2, ease: "Sine.out" });
       fire({ type: "win" });
     }
 
@@ -160,7 +215,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       if (this.flipped) { this.flipped = false; this.physics.world.gravity.y = GRAVITY; this.setOneWay(); }
       this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = [];
       this.rules.forEach(a => { a.fired = 0; a.nextAt = this.time.now + this.timerMs(a.rule); });
-      this.player.body.setAllowGravity(true); this.player.clearTint();
+      this.player.body.setAllowGravity(true);
       this.spawn();
       fire({ type: "start" });
     }
@@ -206,6 +261,20 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     removeMover(id: string) { const m = this.movers.get(id); if (m) { m.body.destroy(); this.movers.delete(id); } }
     setMoverTarget(id: string, x: number, y: number) { const m = this.movers.get(id); if (m) { m.tx = x; m.ty = y; } }
 
+    drawHero(time: number) {
+      if (this.intro) { this.hero.setPosition(this.player.x, this.player.body.bottom); return; }
+      const p = this.player, b = p.body, f = this.flipped;
+      const moving = Math.abs(b.velocity.x) > 5, grounded = f ? b.blocked.up : b.blocked.down;
+      this.squash *= 0.82;
+      const air = grounded ? 0 : Math.min(0.12, Math.abs(b.velocity.y) / JUMP * 0.12);
+      const sy = (1 - this.squash + air) * this.heroScale, sx = (1 + this.squash * 0.8 - air * 0.6) * this.heroScale;
+      const bob = grounded && moving ? Math.abs(Math.sin(time * 0.018)) * 3 : 0;
+      if (!this.dead && !this.won) this.hero.setScale(sx, sy);
+      this.hero.setOrigin(0.5, f ? 0 : 1).setFlipY(f).setFlipX(b.velocity.x < -5 ? true : b.velocity.x > 5 ? false : this.hero.flipX);
+      this.hero.setPosition(p.x, (f ? b.top : b.bottom) + (f ? bob : -bob));
+      this.hero.setAngle(grounded ? (moving ? Math.sign(b.velocity.x) * 7 : 0) : Math.max(-12, Math.min(12, b.velocity.x / 25)));
+    }
+
     update(time: number) {
       const p = this.player, b = p.body, kb = this.keys, inp = hooks.input;
       if (!this.won && !this.dead) {
@@ -215,7 +284,18 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         p.setVelocityX(vx * RUN * this.speedMul);
         if (vx) p.setFlipX(vx < 0);
         const grounded = this.flipped ? b.blocked.up || b.touching.up : b.blocked.down || b.touching.down;
-        if (jump && grounded) p.setVelocityY((this.flipped ? 1 : -1) * JUMP);
+        if (grounded) this.lastGrounded = time;
+        if (jump && !this.jumpHeld) this.jumpPressedAt = time;
+        this.jumpHeld = jump;
+        const up = this.flipped ? 1 : -1;
+        // coyote time + jump buffer: forgiving jumps right at ledge edges
+        if (time - this.jumpPressedAt < BUFFER_MS && time - this.lastGrounded < COYOTE_MS) {
+          p.setVelocityY(up * JUMP); this.jumpPressedAt = -1e9; this.lastGrounded = -1e9; this.cut = false; this.squash = -0.25;
+        }
+        // let go of jump early for a short hop
+        if (!jump && !this.cut && b.velocity.y * up > JUMP * 0.45) { p.setVelocityY(up * JUMP * 0.45); this.cut = true; }
+        if (grounded && !this.wasGrounded) { this.squash = 0.3; this.dust.explode(8, p.x, this.flipped ? b.top : b.bottom); }
+        this.wasGrounded = grounded;
         // step up over 1-tile bumps from slanted lines
         if (grounded && vx && !this.flipped) {
           const fx = vx > 0 ? b.right + 1 : b.left - 1, feet = b.bottom - 1;
@@ -239,7 +319,8 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       }
       // rising lava
       this.lavaGfx.clear();
-      if (this.lavaRise > 0) this.lavaGfx.fillStyle(0xe03131, 0.8).fillRect(0, H - this.lavaRise, W, this.lavaRise);
+      if (this.lavaRise > 0) { const top = H - this.lavaRise, wave = (x: number) => top + Math.sin(x * 0.05 + time * 0.004) * 3; this.lavaGfx.fillStyle(0xff7a1a, 0.35).fillRect(0, top - 6, W, 6).fillStyle(0xe5383b, 0.92).beginPath().moveTo(0, H); for (let x = 0; x <= W; x += 8) this.lavaGfx.lineTo(x, wave(x)); this.lavaGfx.lineTo(W, H).closePath().fillPath(); }
+      this.drawHero(time);
       const s: GameState = { x: p.x, y: p.y, vx: b.velocity.x, vy: b.velocity.y, onFloor: b.blocked.down, deaths: this.deaths, won: this.won, lavaTop: H - this.lavaRise, gravityFlipped: this.flipped };
       tickCbs.forEach(cb => cb(s));
     }
@@ -247,7 +328,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
   const zoom = Math.max(1, Math.min(3, Math.floor(Math.min(parent.clientWidth / W, (parent.clientHeight || 600) / H) * 10) / 10));
   const game = new P.Game({
-    type: P.AUTO, parent, width: W, height: H, pixelArt: false, backgroundColor: "#fffdf7",
+    type: P.AUTO, parent, width: W, height: H, pixelArt: false, backgroundColor: PAPER,
     physics: { default: "arcade", arcade: { gravity: { x: 0, y: GRAVITY }, tileBias: 16 } },
     scale: { mode: P.Scale.FIT, autoCenter: P.Scale.CENTER_BOTH, zoom },
     scene: PlayScene,
