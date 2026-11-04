@@ -189,6 +189,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     }
 
     spawn() {
+      if (this.flipped) this.flip(); // a fresh start, or flipped gravity throws you off the top again and again
       this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
       // risen lava drops back below the start, or you would respawn into it and die forever
       this.lavaRise = Math.min(this.lavaRise, lavaCap);
@@ -201,7 +202,6 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.dead = true; this.deaths++;
       this.cameras.main.shake(140, 0.008); this.cameras.main.flash(160, 255, 90, 70);
       this.hero.setTint(0xff3b3b);
-      this.tweens.add({ targets: this.hero, alpha: 0.2, duration: 400 });
       fire({ type: "die" });
       this.runRules(r => r.trigger.type === "touch" && r.trigger.target === "lava");
       this.time.delayedCall(450, () => this.spawn());
@@ -237,7 +237,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       if (!gone?.fired) return;
       switch (gone.rule.action.type) {
         case "raise_lava": this.lavaRise = Math.max(0, this.lavaRise - (gone.raised ?? 0)); break;
-        case "flip_gravity": if (gone.fired % 2) this.flip(); break;
+        case "flip_gravity": if (this.flipped) this.flip(); break;
         case "speed": {
           const last = this.rules.filter(a => a.fired && a.rule.action.type === "speed").at(-1)?.rule.action;
           this.speedMul = last?.type === "speed" ? clampSpeed(last.x) : 1; break;

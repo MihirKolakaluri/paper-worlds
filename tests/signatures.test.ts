@@ -57,3 +57,11 @@ describe("signature", () => {
     expect(r.warning).toBeUndefined();
   });
 });
+
+describe("things that aren't notes", () => {
+  it("refuses a hand, which SAM can mistake for a note", () => {
+    const hand: [number, number, number] = [107, 74, 58]; // read off the real screen recording
+    const f = rect(frame(320, 240, WHITE), 100, 100, 60, 60, hand);
+    expect(signature(f, { x1: 70, y1: 70, x2: 130, y2: 130 }).ok).toBe(false);
+  });
+});

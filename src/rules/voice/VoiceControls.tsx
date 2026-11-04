@@ -11,6 +11,8 @@ type Props = {
   onText: (text: string) => Promise<unknown>;
   onError: (message: string) => void;
   onMicChange: (on: boolean) => void;
+  /** A rule is waiting on a whistle or clap. */
+  needed?: boolean;
 };
 type State = "off" | "opening" | "calibrating" | "on" | "talking" | "sending";
 
@@ -30,7 +32,7 @@ async function transcribe(wav: ArrayBuffer): Promise<{ text: string } | { error:
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
 
-export default function VoiceControls({ engine, onText, onError, onMicChange }: Props) {
+export default function VoiceControls({ engine, onText, onError, onMicChange, needed }: Props) {
   const [state, setStateRaw] = useState<State>("off");
   const [note, setNote] = useState("");
   const live = useRef<{ mic: Mic; detector: SoundDetector; take: Take | null; state: State } | null>(null);
@@ -122,7 +124,7 @@ export default function VoiceControls({ engine, onText, onError, onMicChange }: 
   }, [engine, onMicChange]);
 
   if (state === "off" || state === "opening") {
-    return <div className={s.voice}><button className={s.mic} disabled={state === "opening"} onClick={turnOn}>{state === "opening" ? "Starting mic…" : "Turn on mic"}</button></div>;
+    return <div className={s.voice}><button className={s.mic} disabled={state === "opening"} onClick={turnOn}>{state === "opening" ? "Starting mic…" : "Turn on mic"}</button>{needed && state === "off" && <span className={s.note}>Your rule listens for sound</span>}</div>;
   }
   return (
     <div className={s.voice}>

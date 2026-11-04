@@ -8,6 +8,7 @@ export type Hsv = Mover["hsv"];
 export type Signature = { ok: true; hsv: Hsv; color: string; warning?: string } | { ok: false; reason: string };
 
 const SAT_FLOOR = 0.25; // below this a note is too close to paper to tell apart (same gate as the catch test)
+const SKIN_HUE = [8, 45], SKIN_MAX_SAT = 0.7; // hands and wood: SAM sometimes calls them sticky notes
 const BG_WARN = 0.03; // share of everything outside the notes that also matches
 
 export function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
@@ -58,6 +59,7 @@ export function signature(f: Img, box: Box, others: Box[] = []): Signature {
   let cx = 0, cy = 0;
   hs.forEach((h, i) => { if (ss[i] >= SAT_FLOOR * 0.6) { cx += Math.cos(h * Math.PI / 180); cy += Math.sin(h * Math.PI / 180); } });
   const hue = (Math.atan2(cy, cx) * 180 / Math.PI + 360) % 360;
+  if (hue >= SKIN_HUE[0] && hue <= SKIN_HUE[1] && S < SKIN_MAX_SAT) return { ok: false, reason: "That looks like a hand or the desk. Use a blue or green note." };
   const gaps = hs.filter((_, i) => ss[i] >= SAT_FLOOR * 0.6).map(h => hueGap(h, hue)).sort((a, b) => a - b);
   const tol = Math.max(12, Math.min(26, (gaps[Math.floor(gaps.length * 0.9)] ?? 0) + 6));
   const hsv: Hsv = { hMin: (hue - tol + 360) % 360, hMax: (hue + tol) % 360, sMin: Math.max(0.2, S * 0.55), vMin: Math.max(0.15, V * 0.4) };

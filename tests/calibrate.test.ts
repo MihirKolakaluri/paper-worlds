@@ -51,7 +51,7 @@ describe("calibrate", () => {
     expect(b.w).toBeCloseTo(48, 3);
     expect(b.h).toBeCloseTo(24, 3);
     const shape = noteShape(b, 8);
-    expect(shape.length).toBe(3);
+    expect(shape.length).toBe(2);
     expect(shape[0].length).toBe(6);
     expect(shape.flat().every(Boolean)).toBe(true);
     expect(noteShape({ w: 2, h: 2 }, 8)).toEqual([[true, true]]); // never smaller than the engine's minimum
@@ -71,5 +71,13 @@ describe("turnedCorners", () => {
   });
   it("four turns come back to the start", () => {
     expect(turnedCorners(W, H, 4)).toEqual(fullFrameCorners(W, H));
+  });
+});
+
+describe("noteShape limits", () => {
+  it("a note close to the camera still makes a plank, not a slab that covers the lava", () => {
+    const shape = noteShape({ w: 400, h: 300 }, 8);
+    expect(shape.length).toBe(2);
+    expect(shape[0].length).toBe(14);
   });
 });

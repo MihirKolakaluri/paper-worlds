@@ -39,8 +39,10 @@ export function boxToLevel(H: Homography, b: Box) {
   return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
 }
 
-/** Mover.shape: a solid rectangle in tiles. The scene won't go below 2 x 1. */
+const MAX_PLANK_TILES = 14, PLANK_ROWS = 2;
+
+/** Mover.shape: a plank in tiles, whatever the note's size on camera, so it has to be moved to be useful. */
 export function noteShape(r: { w: number; h: number }, tile: number): boolean[][] {
-  const cols = Math.max(2, Math.round(r.w / tile)), rows = Math.max(1, Math.round(r.h / tile));
+  const cols = Math.max(2, Math.min(MAX_PLANK_TILES, Math.round(r.w / tile))), rows = Math.min(PLANK_ROWS, Math.max(1, Math.round(r.h / tile)));
   return Array.from({ length: rows }, () => Array<boolean>(cols).fill(true));
 }

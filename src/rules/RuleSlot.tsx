@@ -126,7 +126,7 @@ export default function RuleSlot({ hooks, presets, demo = false }: Props) {
           )}
         </div>
       )}
-      {VOICE_ON && !demo && engine && <VoiceControls key={engine.id} engine={engine} onText={submit} onError={setError} onMicChange={setMicOn} />}
+      {VOICE_ON && !demo && engine && <VoiceControls key={engine.id} engine={engine} onText={submit} onError={setError} onMicChange={setMicOn} needed={!!engine.needsSound()} />}
     </section>
   );
 }
