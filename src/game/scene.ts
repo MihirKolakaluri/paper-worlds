@@ -314,7 +314,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       // movers chase their targets by velocity (never setPosition, which would tunnel the player)
       const frozen = time < this.frozenUntil;
       for (const m of this.movers.values()) {
-        const dx = m.tx - m.body.x, dy = m.ty - m.body.y;
+        const dx = m.tx - m.body.body.center.x, dy = m.ty - m.body.body.center.y; // targets are the centre of the platform
         m.body.body.setVelocity(frozen ? 0 : Math.max(-900, Math.min(900, dx * 12)), frozen ? 0 : Math.max(-900, Math.min(900, dy * 12)));
       }
       // rising lava

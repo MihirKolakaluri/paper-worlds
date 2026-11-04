@@ -1,11 +1,14 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Game from "@/game/Game";
 import type { Hooks, Input } from "@/game/hooks";
 import { Level } from "@/schema/level";
 import { loadLevel } from "@/lib/levelStore";
 import demo from "../../../fixtures/level-demo.json";
+import DemoMover from "@/demo/DemoMover";
+import { SAMPLES, loadSample, sampleById } from "@/demo/samples";
+import d from "@/demo/demo.module.css";
 import s from "./play.module.css";
 
 export default function PlayClient() {
@@ -14,11 +17,19 @@ export default function PlayClient() {
   const [won, setWon] = useState(false);
   const [deaths, setDeaths] = useState(0);
   const [hideWarn, setHideWarn] = useState(false);
+  const [sample, setSample] = useState<string | null>(null);
+  const stage = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fixture = new URLSearchParams(window.location.search).get("fixture");
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading the URL and storage only works after mount
-    setLevel(fixture === "demo" ? Level.parse(demo) : loadLevel() ?? "none");
+    const q = new URLSearchParams(window.location.search), demoId = q.get("demo");
+    if (demoId !== null) {
+      const id = sampleById(demoId).id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reading the URL only works after mount
+      setSample(id);
+      loadSample(id).then(setLevel).catch(() => setLevel(Level.parse(demo)));
+      return;
+    }
+    setLevel(q.get("fixture") === "demo" ? Level.parse(demo) : loadLevel() ?? "none");
   }, []);
 
   const onReady = useCallback((h: Hooks) => {
@@ -30,7 +41,7 @@ export default function PlayClient() {
   if (level === "none") return (
     <main className={s.center}>
       <p>No level yet.</p>
-      <Link className={s.btn} href="/">Snap a drawing</Link>
+      <Link className={s.btn} href="/make">Snap a drawing</Link>
       <button className={s.btnGhost} onClick={() => setLevel(Level.parse(demo))}>Try the demo level</button>
     </main>
   );
@@ -43,14 +54,21 @@ export default function PlayClient() {
   return (
     <main className={s.wrap}>
       <header className={s.top}>
-        <Link href="/" className={s.back}>← New drawing</Link>
+        <Link href={sample ? "/" : "/make"} className={s.back}>{sample ? "← Home" : "← New drawing"}</Link>
         <span className={s.stat} aria-live="polite">Falls: {deaths}</span>
         <button className={s.small} onClick={() => hooks?.restart()}>Restart (R)</button>
       </header>
       {level.warnings.length > 0 && !hideWarn && (
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
-      <div className={s.stage}><Game level={level} onReady={onReady} /></div>
+      <div ref={stage} className={s.stage}><Game level={level} onReady={onReady} /></div>
+      {sample && <DemoMover hooks={hooks} level={level} stage={stage} />}
+      {sample && (
+        <nav className={d.samples} aria-label="Sample levels">
+          Sample levels:{SAMPLES.map(x => <a key={x.id} href={`/play?demo=${x.id}`} aria-current={x.id === sample}>{x.name}</a>)}
+          <Link href="/make">Make your own</Link>
+        </nav>
+      )}
       <p className={s.help}>Arrow keys or WASD to move, Space to jump (tap for a small hop). Reach the flag, dodge the lava.</p>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (
@@ -60,7 +78,7 @@ export default function PlayClient() {
             <p>{deaths === 0 ? "No falls. Nice." : `${deaths} fall${deaths === 1 ? "" : "s"} on the way.`}</p>
             <div className={s.row}>
               <button className={s.btn} autoFocus onClick={() => { setDeaths(0); hooks?.restart(); }}>Play again</button>
-              <Link className={s.btnGhost} href="/">Draw a new level</Link>
+              <Link className={s.btnGhost} href="/make">Draw a new level</Link>
             </div>
           </div>
         </div>

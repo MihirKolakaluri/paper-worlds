@@ -105,7 +105,8 @@ export default function Snap() {
 
   return (
     <main className={s.main}>
-      <h1 className={s.h1}>Paper Worlds</h1>
+      <Link className={s.link} href="/">← Back</Link>
+      <h1 className={s.h1}>Make your own</h1>
       <p className={s.lead}>Draw a game level on paper. Snap a photo. Play it.</p>
       {stage.kind === "reading" ? (
         <div className={s.reading} role="status"><span className={s.spinner} /> Reading your drawing… this takes about 10 seconds.</div>
@@ -113,7 +114,7 @@ export default function Snap() {
         <>
           {stage.kind === "error" && <div className={s.error} role="alert">{stage.message}</div>}
           {pickers}
-          <Link className={s.link} href="/play?fixture=demo">or try the demo level</Link>
+          <Link className={s.link} href="/play?demo=a">or try a sample level with no setup</Link>
           <section className={s.how}>
             <h3>How to draw a level</h3>
             <ul>

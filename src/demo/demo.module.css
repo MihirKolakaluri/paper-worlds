@@ -1,0 +1,7 @@
+.bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 0; }
+.toggle { padding: 8px 14px; border-radius: 10px; border: 2px solid currentColor; background: none; color: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
+.toggle[aria-pressed="true"] { background: #16a34a; border-color: #16a34a; color: #fff; }
+.hint { font-size: 14px; opacity: .75; flex: 1 1 220px; }
+.samples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.samples a { color: inherit; padding: 4px 10px; border-radius: 8px; }
+.samples a[aria-current="true"] { background: #1d4ed8; color: #fff; text-decoration: none; }
