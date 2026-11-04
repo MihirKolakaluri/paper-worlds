@@ -8,7 +8,7 @@ Everyone has a game in their head. Making one takes code. Paper Worlds takes a p
 
 **Play it now: https://paper-worlds-flame.vercel.app**
 
-Press Play this drawing. You don't need paper or a camera or an account.
+Press Start surfing or Play a sample. You don't need paper or a camera or an account.
 
 I built this for the Meta Global AI Developer Hackathon (Indie Developer track) with Muse Spark, SAM 3.1, Muse Wonder and Muse Voice Transcribe.
 
@@ -16,12 +16,12 @@ I built this for the Meta Global AI Developer Hackathon (Indie Developer track) 
 
 You draw a level with a pen. Dark lines are platforms and red is lava. Add a stick figure and a flag, then take a photo. Your own strokes become the level and your stick figure becomes the hero.
 
-Then the paper keeps working while you play.
+There are two games.
 
-- **A sticky note is your controller.** Put a bright note under the camera and you ride a pen plank that follows your hand. Steer through your own level and dodge the scribbles flying at you.
-- **Rules change the game.** Type or say something like "make the lava rise every time I whistle" and it happens.
+- **Draw your game.** Your drawing plays with the keyboard. Type or say a rule like "make the lava rise every time I clap" and it happens.
+- **Asteroid Surf.** Your hand is the controller. Slide a bright sticky note under the camera and you ride a pen plank past asteroids to the end. A mouse or finger works too.
 
-The sample levels are two of my drawings ready to go. Press Ride a plank and your mouse or finger stands in for the sticky note, so it works from a laptop or a phone.
+The samples are two of my drawings ready to go, so you can try everything from a laptop or a phone.
 
 ## How it works
 

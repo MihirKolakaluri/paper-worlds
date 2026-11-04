@@ -2,14 +2,9 @@
 import Link from "next/link";
 import s from "./landing.module.css";
 
-const STEPS = [
-  ["Draw", "Platforms, lava, a stick figure and a flag."],
-  ["Snap", "Your drawing becomes a real game."],
-  ["Play", "Your own hand is the controller."],
-];
-const POWERS = [
-  ["Steer with your hand", "Slide a sticky note and you ride it through your level. Dodge what flies at you."],
-  ["Change the rules", "Say or type \"make the lava rise\" and it does."],
+const GAMES: { title: string; text: string; cta: string; href: string; more?: string; moreHref?: string }[] = [
+  { title: "Draw your game", text: "Draw a level on paper and snap a photo. Play it with your keyboard and change the rules by typing or talking.", cta: "Make your own", href: "/make", more: "Play a sample", moreHref: "/play?demo=a" },
+  { title: "Asteroid Surf", text: "Your hand is the controller. Slide a sticky note, your mouse or your finger to surf past asteroids to the end.", cta: "Start surfing", href: "/surf" },
 ];
 const MODELS = [
   ["Muse Spark", "Looks at your pen marks and knows which is a platform, lava, the flag or you."],
@@ -24,19 +19,20 @@ export default function Home() {
       <p className={s.brand}>Paper Worlds</p>
       <h1 className={s.h1}><span className={s.nb}>If you can draw it,</span> <span className={s.nb}>you can play it.</span></h1>
       <p className={s.lead}>Everyone has a game in their head. Making one takes code. Paper Worlds takes a pen.</p>
-      <div className={s.row}>
-        <Link className={s.btn} href="/play?demo=a">Play this drawing</Link>
-        <Link className={s.btnGhost} href="/make">Make your own</Link>
-      </div>
       <figure className={s.drawing}>
         <img src="/samples/a-hero.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={590} />
-        <figcaption>Play this sample instantly. No camera or setup needed.</figcaption>
       </figure>
-      <ol className={s.how} aria-label="How it works">
-        {STEPS.map(([t, d]) => <li key={t}><h2>{t}</h2><p>{d}</p></li>)}
-      </ol>
-      <section className={s.powers}>
-        {POWERS.map(([t, d]) => <div key={t}><h2>{t}</h2><p>{d}</p></div>)}
+      <section className={s.games} aria-label="Pick a game">
+        {GAMES.map(g => (
+          <div key={g.title} className={s.game}>
+            <h2>{g.title}</h2>
+            <p>{g.text}</p>
+            <div className={s.row}>
+              <Link className={s.btn} href={g.href}>{g.cta}</Link>
+              {g.more && <Link className={s.btnGhost} href={g.moreHref!}>{g.more}</Link>}
+            </div>
+          </div>
+        ))}
       </section>
       <section className={s.meta}>
         <p className={s.eyebrow}>Built on the Meta Model API</p>

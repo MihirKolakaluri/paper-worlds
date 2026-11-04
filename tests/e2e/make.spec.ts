@@ -11,6 +11,5 @@ test("upload a drawing and play it", async ({ page }) => {
   await page.getByRole("button", { name: "Make my level" }).click();
   await expect(page).toHaveURL(/\/play/, { timeout: 50_000 });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("button", { name: "Add sticky notes" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Turn on mic" })).toBeVisible();
 });

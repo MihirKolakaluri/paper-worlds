@@ -66,11 +66,7 @@ test.describe("desktop", () => {
 
   test("your hand steers the hero with no keys, Space never stops the ride and scribbles arrive", async ({ page }) => {
     test.setTimeout(60_000);
-    await open(page, "/play?demo=a");
-    await page.getByRole("button", { name: "Ride a plank" }).click();
-    await page.keyboard.press("Space");
-    await page.waitForTimeout(900);
-    await expect(page.getByRole("button", { name: "Stop riding" })).toBeVisible();
+    await open(page, "/surf");
     const box = (await page.locator("canvas").boundingBox())!, lvl = await (await page.request.get(`${BASE}/samples/a.json`)).json();
     const k = box.width / (lvl.width * 8), sx = (x: number) => box.x + x * k, sy = (y: number) => box.y + y * k;
     await page.mouse.move(sx(300), sy(200));
@@ -89,7 +85,7 @@ test.describe("desktop", () => {
     await page.waitForTimeout(2500);
     expect(Math.abs((await state(page)).y - 170)).toBeLessThan(30); // and you land back on it
     await page.waitForTimeout(9000); // long enough for scribbles to cross or hit
-    const dodged = Number((await page.getByText(/^Dodged:/).innerText()).replace(/\D/g, "")), falls = Number((await page.getByText(/^Falls:/).innerText()).replace(/\D/g, ""));
+    const dodged = Number((await page.getByText(/^Dodged:/).innerText()).replace(/\D/g, "")), falls = Number((await page.getByText(/^Hits:/).innerText()).replace(/\D/g, ""));
     console.log("SCRIBBLES", JSON.stringify({ dodged, falls }));
     expect(dodged + falls).toBeGreaterThan(0);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/ride.png` });
@@ -130,8 +126,7 @@ test.describe("phone", () => {
 
   test("a finger steers the platform and doesn't scroll the page", async ({ page }) => {
     test.setTimeout(40_000);
-    await open(page, "/play?demo=a");
-    await page.getByRole("button", { name: "Ride a plank" }).tap();
+    await open(page, "/surf");
     await page.waitForTimeout(400);
     const box = (await page.locator("canvas").boundingBox())!;
     const before = await page.locator("canvas").screenshot();

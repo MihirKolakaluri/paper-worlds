@@ -14,7 +14,7 @@ export class OneEuro {
   private x: number | null = null;
   private dx = 0;
   private t = 0;
-  constructor(private minCutoff = 2, private beta = 0.15, private dCutoff = 5) {}
+  constructor(private minCutoff = 2, private beta = 0.2, private dCutoff = 5) {}
   private static alpha(cutoff: number, dt: number) { const tau = 1 / (2 * Math.PI * cutoff); return 1 / (1 + tau / dt); }
   reset() { this.x = null; this.dx = 0; }
   /** t is in seconds. */

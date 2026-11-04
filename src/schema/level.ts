@@ -13,6 +13,8 @@ export const Level = z.object({
   solid: grid,
   lava: grid,
   warnings: z.array(z.string()),
+  /** Asteroid Surf: a clean page you ride through, with an ending instead of a flag. */
+  surf: z.boolean().optional(),
   /** Full jump height in px, tuned so the drawn level is beatable. Missing = default from the figure size. */
   jumpH: z.number().positive().optional(),
 });

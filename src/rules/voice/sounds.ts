@@ -17,9 +17,9 @@ const WHISTLE_REARM_MS = 150, WHISTLE_COOLDOWN_MS = 600;
 const CLAP_MIN_GAP_MS = 150, CLAP_MAX_GAP_MS = 600;
 const CLAP_JUMP = 3; // a spike stands this far above the recent level
 const CLAP_PEAK_WINDOW_MS = 30;
-const CLAP_DECAY_MS = 90, CLAP_DECAY_TO = 0.4; // and is mostly gone this soon, unlike a shout or a word
+const CLAP_DECAY_MS = 90, CLAP_DECAY_TO = 0.7; // and is mostly gone this soon, unlike a shout or a word
 const CLAP_LOCKOUT_MS = 120, CLAP_COOLDOWN_MS = 700;
-const CLAP_MAX_PEAK_SHARE = 0.4, CLAP_MIN_HIGH_SHARE = 0.25; // broadband: no single pitch, real energy above 1 kHz
+const CLAP_MAX_PEAK_SHARE = 0.7, CLAP_MIN_HIGH_SHARE = 0.1; // set from real claps in a real room: 8 of them heard, 1 false alarm in 3 minutes of talk
 const KEY_QUIET_MS = 150; // a key's release click comes just after keyup
 
 const SLOW_FOLLOW = 0.05;

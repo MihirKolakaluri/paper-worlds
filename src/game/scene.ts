@@ -5,7 +5,8 @@ import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 import type { GameEvent, GameState, Hooks, HudEvent } from "./hooks";
 import { respawnLavaCap } from "./reach";
-import { rideVelocity, scribbleWave, scribbleY } from "./ride";
+import { CHASE, rideVelocity, scribbleWave, scribbleY } from "./ride";
+import { surfProgress } from "@/surf/level";
 import { clampRaise, clampSpeed, rearm, rulesFor, spawnSpot, type Active } from "./rules";
 import { buildArt, PAPER } from "./art";
 import { BUFFER_MS, COYOTE_MS, GRAVITY, physicsFor } from "./physics";
@@ -61,6 +62,10 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     nextScribbleAt = 0;
     scribbleCount = 0;
     airborne = false; // jumped off the plank on purpose
+    surfMs = 0;
+    surfPct = -1;
+    surfHits = 0;
+    dashes: Phaser.GameObjects.Rectangle[] = [];
     moverGroup!: Phaser.Physics.Arcade.Group;
     extraTiles: [number, number][] = [];
     hero!: Phaser.GameObjects.Image;
@@ -98,6 +103,10 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       // the drawn flag waves from the bottom of its pole
       const flag = this.add.image(art.flagAt.x, art.flagAt.y + art.flag.height, "flag").setOrigin(0, 1);
       this.tweens.add({ targets: flag, scaleX: 0.9, angle: -2, duration: 700, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+      if (level.surf) {
+        flag.setVisible(false); inkImg.setVisible(false); shadow.setVisible(false); // a clean page: just you and the asteroids
+        for (let i = 0; i < 16; i++) this.dashes.push(this.add.rectangle(Math.random() * W, Math.random() * H, 20 + Math.random() * 50, 2, 0x1f2433, 0.14)); // pencil speed lines
+      }
       this.tweens.add({ targets: this.glow, alpha: 0.55, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
       this.makeParticles(art.lavaTops);
 
@@ -138,7 +147,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.extraGfx = this.add.graphics().setDepth(3);
       const goal = this.add.zone(level.goal.x * T, level.goal.y * T, level.goal.w * T, level.goal.h * T).setOrigin(0);
       this.physics.add.existing(goal, true);
-      this.physics.add.overlap(this.player, goal, () => this.win());
+      this.physics.add.overlap(this.player, goal, () => { if (!level.surf) this.win(); });
 
       const kb = this.input.keyboard!;
       this.keys = kb.addKeys("LEFT,RIGHT,UP,SPACE,A,D,W,R") as Record<string, Phaser.Input.Keyboard.Key>;
@@ -147,7 +156,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
       this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
       this.spawn();
-      if (photo) this.playIntro([shadow, inkImg, lavaImg, this.glow, flag]);
+      if (photo && !level.surf) this.playIntro([shadow, inkImg, lavaImg, this.glow, flag]);
       pending.splice(0).forEach(f => f(this));
       fire({ type: "start" });
     }
@@ -215,7 +224,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
     die() {
       if (this.dead || this.won) return;
-      this.dead = true; this.deaths++;
+      this.dead = true; this.deaths++; this.surfHits++;
       this.scribbles.clear(true, true); this.rideStart = this.time.now; this.nextScribbleAt = this.time.now + 1500;
       this.cameras.main.shake(140, 0.008); this.cameras.main.flash(160, 255, 90, 70);
       this.hero.setTint(0xff3b3b);
@@ -236,6 +245,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     }
 
     resetLevel() {
+      this.surfMs = 0; this.surfPct = -1; this.surfHits = 0;
       this.won = false; this.lavaRise = 0; this.speedMul = 1; this.frozenUntil = 0;
       if (this.flipped) { this.flipped = false; this.physics.world.gravity.y = GRAVITY; this.setOneWay(); }
       this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = []; this.drawExtra();
@@ -285,7 +295,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       const a = active.rule.action;
       switch (a.type) {
         case "raise_lava": {
-          const next = Math.min(H * 0.6, this.lavaRise + clampRaise(a.px));
+          const next = Math.min(H, this.lavaRise + clampRaise(a.px));
           active.raised = (active.raised ?? 0) + next - this.lavaRise; this.lavaRise = next; break;
         }
         case "flip_gravity": this.flip(); break;
@@ -330,7 +340,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.rider = id;
       this.scribbles.clear(true, true);
       this.rideStart = this.time.now; this.nextScribbleAt = this.time.now + 1500; this.scribbleCount = 0;
-      fire({ type: "ride", on: !!id });
+      fire({ type: "ride", id });
       if (id && !this.won) this.spawn();
     }
     removeMover(id: string) { const m = this.movers.get(id); if (m) { m.body.destroy(); this.movers.delete(id); } }
@@ -350,7 +360,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.hero.setAngle(grounded ? (moving ? Math.sign(b.velocity.x) * 7 : 0) : Math.max(-12, Math.min(12, b.velocity.x / 25)));
     }
 
-    update(time: number) {
+    update(time: number, delta: number) {
       const p = this.player, b = p.body, kb = this.keys, inp = hooks.input;
       if (!this.won && !this.dead) {
         const left = kb.LEFT.isDown || kb.A.isDown || inp.left, right = kb.RIGHT.isDown || kb.D.isDown || inp.right;
@@ -360,7 +370,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         if (plank) { const rv = rideVelocity(plank.body.center.x, p.x); p.setVelocityX(rv); if (Math.abs(rv) > 30) p.setFlipX(rv < 0); }
         else p.setVelocityX(vx * RUN * this.speedMul);
         if (vx) p.setFlipX(vx < 0);
-        if (plank && time >= this.nextScribbleAt) {
+        if (plank && level.surf && time >= this.nextScribbleAt) {
           const wave = scribbleWave(time - this.rideStart);
           const s = this.scribbles.create(W + 20, scribbleY(++this.scribbleCount, Math.random(), p.y, H), "scribble") as Phaser.Physics.Arcade.Sprite;
           s.setDepth(6).setVelocityX(-wave.speed).setAngularVelocity(240);
@@ -397,6 +407,13 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         const hit = this.layer.getTilesWithinWorldXY(b.left + 2, b.top + 2, b.width - 4, b.height - 3).some(t => t.index === 2);
         if (hit || b.bottom > lavaTop + 2 || (this.flipped ? b.bottom < -20 : b.top > H + 20)) this.die();
       }
+      if (level.surf && this.plank() && !this.won) {
+        const pr = surfProgress(this.surfMs, this.dead ? 0 : delta, this.surfHits);
+        this.surfHits = 0; this.surfMs = pr.ms;
+        if (pr.pct !== this.surfPct) { this.surfPct = pr.pct; fire({ type: "progress", pct: pr.pct }); }
+        if (pr.done) this.win();
+        for (const d of this.dashes) { d.x -= delta * 0.5; if (d.x < -60) { d.x = W + 60; d.y = Math.random() * H; } }
+      }
       // timers
       for (const a of this.rules) if (time >= a.nextAt && (a.rule.mode === "every" || a.fired === 0)) {
         a.fired++; a.nextAt = time + this.timerMs(a.rule); this.act(a); fire({ type: "rule", id: a.rule.id });
@@ -405,7 +422,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       const frozen = time < this.frozenUntil;
       for (const m of this.movers.values()) {
         const dx = m.tx - m.body.body.center.x, dy = m.ty - m.body.body.center.y; // targets are the centre of the platform
-        m.body.body.setVelocity(frozen ? 0 : Math.max(-900, Math.min(900, dx * 12)), frozen ? 0 : Math.max(-900, Math.min(900, dy * 12)));
+        m.body.body.setVelocity(frozen ? 0 : Math.max(-1400, Math.min(1400, dx * CHASE)), frozen ? 0 : Math.max(-1400, Math.min(1400, dy * CHASE)));
       }
       // rising lava
       this.lavaGfx.clear();

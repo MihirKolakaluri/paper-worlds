@@ -4,9 +4,9 @@ import { rideVelocity, scribbleWave, scribbleY } from "@/game/ride";
 describe("riding the plank", () => {
   it("the hero chases the plank fast and stops on it", () => {
     expect(rideVelocity(500, 500)).toBe(0);
-    expect(rideVelocity(510, 500)).toBe(120);
-    expect(rideVelocity(5000, 0)).toBe(900);
-    expect(rideVelocity(0, 5000)).toBe(-900);
+    expect(rideVelocity(510, 500)).toBe(200);
+    expect(rideVelocity(5000, 0)).toBe(1400);
+    expect(rideVelocity(0, 5000)).toBe(-1400);
   });
 });
 

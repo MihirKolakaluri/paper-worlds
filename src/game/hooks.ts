@@ -9,7 +9,7 @@ import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 
 export type GameEvent = "whistle" | "clap";
-export type HudEvent = { type: "win" } | { type: "die" } | { type: "start" } | { type: "rule"; id: string } | { type: "dodge" } | { type: "ride"; on: boolean };
+export type HudEvent = { type: "win" } | { type: "die" } | { type: "start" } | { type: "rule"; id: string } | { type: "dodge" } | { type: "ride"; id: string | null } | { type: "progress"; pct: number };
 export type GameState = { x: number; y: number; vx: number; vy: number; onFloor: boolean; deaths: number; won: boolean; lavaTop: number; gravityFlipped: boolean; riding: boolean };
 export type Input = { left: boolean; right: boolean; jump: boolean };
 

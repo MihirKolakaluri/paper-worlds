@@ -1,14 +1,12 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Game from "@/game/Game";
 import type { Hooks, Input } from "@/game/hooks";
 import { Level } from "@/schema/level";
 import { loadLevel } from "@/lib/levelStore";
 import RuleSlot from "@/rules/RuleSlot";
-import MoverSlot from "@/tracking/MoverSlot";
 import demo from "../../../fixtures/level-demo.json";
-import DemoMover from "@/demo/DemoMover";
 import { SAMPLES, loadSample, sampleById } from "@/demo/samples";
 import { PRESETS } from "@/demo/presets";
 import d from "@/demo/demo.module.css";
@@ -20,10 +18,7 @@ export default function PlayClient() {
   const [won, setWon] = useState(false);
   const [deaths, setDeaths] = useState(0);
   const [hideWarn, setHideWarn] = useState(false);
-  const [riding, setRiding] = useState(false);
-  const [dodged, setDodged] = useState(0);
   const [sample, setSample] = useState<string | null>(null);
-  const stage = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search), demoId = q.get("demo");
@@ -39,7 +34,7 @@ export default function PlayClient() {
 
   const onReady = useCallback((h: Hooks) => {
     setHooks(h);
-    h.onEvent(e => { if (e.type === "win") setWon(true); if (e.type === "start") { setWon(false); setDodged(0); } if (e.type === "ride") { setRiding(e.on); setDodged(0); } if (e.type === "dodge") setDodged(n => n + 1); if (e.type === "die") setDeaths(d => d + 1); });
+    h.onEvent(e => { if (e.type === "win") setWon(true); if (e.type === "start") setWon(false); if (e.type === "die") setDeaths(d => d + 1); });
   }, []);
 
   if (level === null) return <main className={s.center}>Loading…</main>;
@@ -60,30 +55,27 @@ export default function PlayClient() {
     <main className={s.wrap}>
       <header className={s.top}>
         <Link href={sample ? "/" : "/make"} className={s.back}>{sample ? "← Home" : "← New drawing"}</Link>
-        {riding && <span className={`${s.stat} ${s.dodged}`}>Dodged: {dodged}</span>}
         <span className={s.stat} aria-live="polite">Falls: {deaths}</span>
         <button className={s.small} onClick={() => hooks?.restart()}>Restart (R)</button>
       </header>
       {level.warnings.length > 0 && !hideWarn && (
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
-      <div ref={stage} className={s.stage}>
+      <div className={s.stage}>
         <Game level={level} onReady={onReady} />
         <p className={s.intro}>{sample ? "Drawn by hand. Now beat it." : "You drew this. Now beat it."}</p>
       </div>
       <RuleSlot hooks={hooks} presets={sample ? PRESETS : undefined} demo={!!sample} />
-      {sample && <DemoMover hooks={hooks} level={level} stage={stage} />}
       {sample && (
         <nav className={d.samples} aria-label="Sample levels">
           Sample levels:{SAMPLES.map(x => <a key={x.id} href={`/play?demo=${x.id}`} aria-current={x.id === sample}>{x.name}</a>)}
           <Link href="/make">Make your own</Link>
         </nav>
       )}
-      {!sample && <MoverSlot hooks={hooks} level={level} />}
       <div className={s.keys}>
-        {riding ? <span>Steer with your hand</span> : <span><kbd>←</kbd><kbd>→</kbd> Move</span>}
+        <span><kbd>←</kbd><kbd>→</kbd> Move</span>
         <span><kbd>Space</kbd> Jump</span>
-        <span>{riding ? "Dodge the scribbles" : "Reach the flag"}</span>
+        <span>Reach the flag</span>
       </div>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (

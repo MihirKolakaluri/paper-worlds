@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { readFileSync } from "node:fs";
 
 // The paths that need the app's own server: a typed rule through Wonder, and the camera panel on a fake camera.
 const BASE = process.env.BASE_URL ?? "http://localhost:3111";
@@ -19,12 +18,9 @@ test("camera panel: stopping during Find notes leaves nothing stuck", async ({ p
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(e.message));
-  await page.goto(BASE);
-  const level = readFileSync("public/samples/a.json", "utf8");
-  await page.evaluate(l => sessionStorage.setItem("pw-level", l), level);
-  await page.goto(`${BASE}/play`);
+  await page.goto(`${BASE}/surf`);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(1500);
 
   await page.getByRole("button", { name: "Add sticky notes" }).click();
   await page.getByRole("button", { name: "Find notes" }).click({ timeout: 15_000 });

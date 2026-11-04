@@ -18,20 +18,13 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     expect(scroll).toBeLessThanOrEqual(0);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-landing.png`, fullPage: true });
 
-    await page.getByRole("link", { name: "Play this drawing" }).click();
+    await page.getByRole("link", { name: "Play a sample" }).click();
     await expect(page).toHaveURL(/demo=a/);
     await expect(page.getByLabel("Type a rule")).toHaveAttribute("placeholder", "Try: double speed");
     await expect(page.getByText("Drawn by hand. Now beat it.")).toBeVisible();
     const canvas = page.locator("canvas");
     await expect(canvas).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(2500);
-
-    await page.getByRole("button", { name: "Ride a plank" }).click();
-    const box = (await canvas.boundingBox())!;
-    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.35);
-    await page.waitForTimeout(800);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-play.png` });
-    await expect(page.getByRole("button", { name: "Stop riding" })).toBeVisible();
 
     await page.getByRole("button", { name: /Lava rises every 5 seconds/ }).click();
     await expect(page.getByText("Lava rises every 5 seconds").first()).toBeVisible();
@@ -72,4 +65,18 @@ test("flipped gravity can't trap a player in a falling loop", async ({ page }) =
   const falls = Number((await page.getByText(/^Falls:/).innerText()).replace(/\D/g, ""));
   console.log("FLIPFALLS", falls);
   expect(falls).toBeLessThanOrEqual(2);
+});
+
+test("Asteroid Surf opens clean from the landing page and steers with no setup", async ({ page }) => {
+  test.setTimeout(40_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(BASE);
+  await page.getByRole("link", { name: "Start surfing" }).click();
+  await expect(page).toHaveURL(/surf/);
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Surf to the end. Dodge the asteroids.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add sticky notes" })).toBeVisible();
+  await page.waitForTimeout(4000);
+  const now = Number(await page.getByRole("progressbar").getAttribute("aria-valuenow"));
+  expect(now).toBeGreaterThan(0);
 });

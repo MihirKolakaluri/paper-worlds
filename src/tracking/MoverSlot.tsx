@@ -144,7 +144,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {error && <span className={s.error} role="alert">{error}</span>}
       <button className={s.btn} disabled={!hooks} onClick={start}>Add sticky notes</button>
-      <span className={s.tag}>Use a real sticky note as your controller</span>
+      <span className={s.tag}>Or steer with a real sticky note</span>
     </div>
   );
 
@@ -153,7 +153,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {phase === "live" && (
         <div className={s.note} aria-live="polite">
-          {lost ? <b>Looking for your note…</b> : <><b>Your note is your controller</b><span>Slide it to steer. Dodge the scribbles.</span></>}
+          {lost ? <b>Looking for your note…</b> : <><b>Your note is your controller</b><span>Slide it to steer. Dodge the asteroids.</span></>}
         </div>
       )}
       {phase === "live" && <button className={s.ghost} onClick={turn}>Wrong way? Turn picture</button>}
