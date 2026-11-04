@@ -27,7 +27,7 @@ export default function DemoMover({ hooks, level, stage }: { hooks: Hooks | null
   return (
     <div className={s.bar}>
       <button className={s.toggle} aria-pressed={on} onClick={e => { setOn(v => !v); if (e.detail > 0) e.currentTarget.blur(); }}>{on ? "Remove the platform" : "Add a moving platform"}</button>
-      <span className={s.hint}>{on ? "Move over the game to steer the green platform." : "Move a platform with your mouse or finger. On your own level a camera tracks a real sticky note."}</span>
+      <span className={s.hint}>{on ? "Your platform is a bridge. Steer it under you to cross the lava." : "Add a bridge you steer with your mouse or finger. On your own level a real sticky note does this under a camera."}</span>
     </div>
   );
 }

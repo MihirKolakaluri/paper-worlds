@@ -144,7 +144,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {error && <span className={s.error} role="alert">{error}</span>}
       <button className={s.btn} disabled={!hooks} onClick={start}>Add sticky notes</button>
-      <span className={s.hint}>Point a camera down at your desk and a real sticky note becomes a platform in this game.</span>
+      <span className={s.hint}>Point a camera down at your desk and a real sticky note becomes a bridge in this game.</span>
     </div>
   );
 
@@ -152,7 +152,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
   const lost = stats?.lost ?? 0;
   return (
     <div className={s.bar} onClick={release}>
-      {phase === "live" && <span className={s.status} aria-live="polite">{lost ? "Looking for a lost note…" : `Following ${notes} note${notes === 1 ? "" : "s"}`}</span>}
+      {phase === "live" && <span className={s.status} aria-live="polite">{lost ? "Looking for a lost note…" : "Your note is a bridge. Slide it under you to cross the lava."}</span>}
       {phase === "live" && <button className={s.ghost} onClick={turn}>Note moves the wrong way? Turn picture</button>}
       {hidden && <button className={s.btn} onClick={() => setHidden(false)}>Show camera</button>}
       {debug && stats && (

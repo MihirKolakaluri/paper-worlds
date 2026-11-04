@@ -35,7 +35,7 @@ test("camera panel: stopping during Find notes leaves nothing stuck", async ({ p
   const find = page.getByRole("button", { name: "Find notes" });
   await expect(find).toBeEnabled({ timeout: 15_000 });
   await find.click();
-  await expect(page.getByRole("alert").or(page.getByText(/Following/)).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("alert").or(page.getByText(/Your note is a bridge/)).first()).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Stop camera" }).click();
   expect(errors).toEqual([]);
 });
