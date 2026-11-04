@@ -1,8 +1,8 @@
 # Paper Worlds
 
-**If you can draw it, you can play it.**
+**The next computer is already on your desk.**
 
-Everyone has a game in their head. Making one takes code. Paper Worlds takes a pen.
+A pen is your editor. A sticky note is your controller. Your voice is your code. If you can draw it, you can play it.
 
 ![A pen drawing played as a game, reaching the flag](docs/demo.gif)
 
@@ -21,7 +21,13 @@ There are two games.
 - **Draw your game.** Your drawing plays with the keyboard. Type or say a rule like "make the lava rise every time I clap" and it happens.
 - **Asteroid Surf.** Your hand is the controller. Slide a bright sticky note under the camera and you ride a pen plank past asteroids to the end. A mouse or finger works too.
 
-The samples are two of my drawings ready to go, so you can try everything from a laptop or a phone.
+The samples are two of my drawings ready to go and everything works from a laptop or a phone.
+
+## Where this goes
+
+For decades we have come to the computer on its terms, with keyboards and mice and glass. That era is ending. AI can now see a scribble, follow a scrap of paper and hear a sentence. Anything in your hands can run software.
+
+Paper Worlds starts with a game since a game is the fastest way to feel it. The same idea scales to every classroom, workshop and factory floor. Sketch a floor plan and walk it. Move tokens on a table and run a warehouse. Every table is a screen.
 
 ## How it works
 

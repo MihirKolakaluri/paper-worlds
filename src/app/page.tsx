@@ -17,8 +17,9 @@ export default function Home() {
   return (
     <main className={s.main}>
       <p className={s.brand}>Paper Worlds</p>
-      <h1 className={s.h1}><span className={s.nb}>If you can draw it,</span> <span className={s.nb}>you can play it.</span></h1>
-      <p className={s.lead}>Everyone has a game in their head. Making one takes code. Paper Worlds takes a pen.</p>
+      <h1 className={s.h1}><span className={s.nb}>The next computer is</span> <span className={s.nb}>already on your desk.</span></h1>
+      <p className={s.lead}>A pen is your editor. A sticky note is your controller. Your voice is your code.</p>
+      <p className={s.tagline}>If you can draw it, you can play it.</p>
       <figure className={s.drawing}>
         <img src="/samples/a-hero.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={590} />
       </figure>
@@ -33,6 +34,11 @@ export default function Home() {
             </div>
           </div>
         ))}
+      </section>
+      <section className={s.vision}>
+        <h2 className={s.h2}>Every table is a screen.</h2>
+        <p>For decades we have come to the computer on its terms, with keyboards and mice and glass. That era is ending. AI can now see a scribble, follow a scrap of paper and hear a sentence. Anything in your hands can run software.</p>
+        <p>Today it&apos;s a game. Next it&apos;s every classroom, every workshop and every factory floor. Nothing to buy and nothing to install. Just the things already in front of you.</p>
       </section>
       <section className={s.meta}>
         <p className={s.eyebrow}>Built on the Meta Model API</p>

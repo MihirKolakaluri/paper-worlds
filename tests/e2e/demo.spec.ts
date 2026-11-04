@@ -11,7 +11,8 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     page.on("pageerror", e => errors.push(e.message));
     await page.setViewportSize({ width, height });
     await page.goto(BASE);
-    await expect(page.getByRole("heading", { name: "If you can draw it, you can play it." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "The next computer is already on your desk." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Every table is a screen." })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Four Meta models. One piece of paper." })).toBeVisible();
     for (const m of ["Muse Spark", "SAM 3.1", "Muse Wonder", "Muse Voice Transcribe"]) await expect(page.getByRole("heading", { name: m })).toBeVisible();
     const scroll = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -36,7 +37,7 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     await expect(page).toHaveURL(/demo=b/);
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
     await page.getByRole("link", { name: "← Home" }).click();
-    await expect(page.getByRole("heading", { name: "If you can draw it, you can play it." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "The next computer is already on your desk." })).toBeVisible();
     expect(errors).toEqual([]);
   });
 }
