@@ -8,10 +8,10 @@ describe("guard", () => {
     const g = checkGuard("1.1.1.1", Date.now(), { DEMO_KILL_SWITCH: "1" });
     expect(g).toMatchObject({ ok: false, status: 503 });
   });
-  it("limits one IP to 20 calls an hour", () => {
+  it("limits one IP to 60 calls an hour", () => {
     const t = Date.UTC(2026, 10, 1, 12);
-    for (let i = 0; i < 20; i++) expect(checkGuard("2.2.2.2", t + i, {}).ok).toBe(true);
-    expect(checkGuard("2.2.2.2", t + 21, {})).toMatchObject({ ok: false, status: 429 });
+    for (let i = 0; i < 60; i++) expect(checkGuard("2.2.2.2", t + i, {}).ok).toBe(true);
+    expect(checkGuard("2.2.2.2", t + 61, {})).toMatchObject({ ok: false, status: 429 });
     expect(checkGuard("3.3.3.3", t + 22, {}).ok).toBe(true);
     expect(checkGuard("2.2.2.2", t + 3_600_100, {}).ok).toBe(true);
   });

@@ -7,7 +7,7 @@ const HOUR = 3_600_000;
 export type Budget = { name: string; perHour: number; capEnv: "DAILY_CAP" | "FIND_DAILY_CAP"; cap: number; busy: string; capped: string };
 
 export const DEFAULT_BUDGET: Budget = {
-  name: "default", perHour: 20, capEnv: "DAILY_CAP", cap: 300,
+  name: "default", perHour: 60, capEnv: "DAILY_CAP", cap: 300,
   busy: "That's a lot of levels! Wait a bit and try again.",
   capped: "We hit today's limit. Try the demo level, it works without the AI.",
 };
