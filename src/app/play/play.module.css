@@ -9,12 +9,14 @@
 .warn { background: #fff3c4; color: #5a4300; padding: 8px 12px; border-radius: 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px #0002; }
 .warn button { border: 0; background: #5a4300; color: #fff; border-radius: 999px; padding: 4px 14px; cursor: pointer; }
 .stage { flex: 1; min-height: 0; border-radius: 6px; overflow: hidden; background: var(--paper); box-shadow: 0 1px 2px #0003, 0 12px 32px #0002; }
-.help { margin: 0; font-family: var(--font-hand), system-ui; font-size: 19px; color: var(--fg); opacity: .7; text-align: center; }
+.keys { display: flex; justify-content: center; align-items: center; gap: 24px; font-size: 14px; font-weight: 600; color: var(--fg); }
+.keys span { display: inline-flex; align-items: center; gap: 5px; }
+.keys kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 1px 0 #0003, 0 1px 3px #0002; font: inherit; }
 .pads { display: none; gap: 12px; }
 .pad { width: 76px; height: 66px; font-size: 26px; border-radius: 18px; border: 0; background: var(--paper); color: var(--ink); box-shadow: 0 2px 0 #0003, 0 4px 12px #0002; touch-action: none; user-select: none; }
 .pad:active { transform: translateY(2px); box-shadow: 0 0 0 #0003, 0 2px 6px #0002; }
 .grow { flex: 1; }
-@media (pointer: coarse) { .pads { display: flex; } .help { display: none; } }
+@media (pointer: coarse) { .pads { display: flex; } .keys { display: none; } }
 @media (max-width: 640px) { .wrap { height: auto; min-height: 100dvh; } .stage { flex: none; height: clamp(220px, 32dvh, 300px); } }
 .win { position: fixed; inset: 0; background: #0006; backdrop-filter: blur(3px); display: grid; place-items: center; padding: 16px; animation: fade .25s ease-out; }
 .card { background: var(--paper); color: var(--ink); border-radius: 8px; padding: 28px 32px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 20px 60px #0004; transform: rotate(-1.2deg); animation: pop .35s cubic-bezier(.2, 1.4, .4, 1); }

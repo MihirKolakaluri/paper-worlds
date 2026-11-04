@@ -23,7 +23,7 @@ export function chooseCamera(cams: Cam[], remembered: string | null): string | n
 export function iphoneHint(cams: Cam[], ua: string): string | null {
   if (cams.some(c => PHONE.test(c.label))) return null;
   const notSafari = /chrome|chromium|crios|edg|firefox/i.test(ua);
-  return "No iPhone listed? Open Continuity Camera: iPhone near Mac, same Apple ID." + (notSafari ? " Safari sees the iPhone and Chrome did not, so use Safari if it still doesn't show." : " Locking the iPhone helps it show up.");
+  return notSafari ? "No iPhone here? Use Safari." : "No iPhone here? Lock it and keep it near your Mac.";
 }
 
 export function cameraError(e: unknown): string {

@@ -118,6 +118,19 @@ describe("MoverSession", () => {
     expect(anchors.filter(a => a.lost).length).toBe(1);
     expect(s.applyBoxes([box(240, 120)], { frame: onlyBlue(), anchors }, 1300).found).toBe(0);
   });
+  it("a wrong SAM box on the desk can't teach the tracker that the desk is the note", () => {
+    const WOOD: [number, number, number] = [176, 128, 84];
+    const { s } = make();
+    const desk = () => rect(frame(320, 240, WOOD), 100, 120, S, S, GREEN);
+    s.addNotes([box(100, 120)], desk());
+    s.step(desk().data, 320, 240, 0);
+    const lost = () => frame(320, 240, WOOD); // the hand took the note away
+    s.step(lost().data, 320, 240, 1200);
+    const anchors = s.anchors(), before = anchors[0].sig;
+    expect(anchors[0].lost).toBe(true);
+    expect(s.applyBoxes([box(104, 124)], { frame: lost(), anchors }, 1300)).toEqual({ changed: false, found: 0 });
+    expect(s.anchors()[0].sig).toEqual(before);
+  });
   it("a re-anchor that agrees with the tracker changes nothing, even if the note moved during the call", () => {
     const { s } = make();
     s.addNotes([box(100, 120)], scene(100, 120));

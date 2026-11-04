@@ -107,3 +107,15 @@ describe("Tracker", () => {
     expect(t.get("a")).toMatchObject({ state: "tracking", x: 200, y: 60, alpha: 1 });
   });
 });
+
+describe("blob size", () => {
+  it("a blob far bigger than the note is not the note, so it reads as lost instead of locking on", () => {
+    const sig = { hMin: 100, hMax: 140, sMin: 0.3, vMin: 0.3 };
+    const tr = new Tracker();
+    tr.add("n", sig, 160, 120, 40 * 40);
+    const w = 320, h = 240, d = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < d.length; i += 4) { d[i] = 60; d[i + 1] = 220; d[i + 2] = 60; d[i + 3] = 255; }
+    tr.process(d, w, h, 0);
+    expect(tr.get("n")!.state).not.toBe("tracking");
+  });
+});

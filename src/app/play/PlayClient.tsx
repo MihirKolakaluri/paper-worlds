@@ -74,7 +74,11 @@ export default function PlayClient() {
         </nav>
       )}
       {!sample && <MoverSlot hooks={hooks} level={level} />}
-      <p className={s.help}>Arrow keys or WASD to move, Space to jump (tap for a small hop). Reach the flag, dodge the lava.</p>
+      <div className={s.keys}>
+        <span><kbd>←</kbd><kbd>→</kbd> Move</span>
+        <span><kbd>Space</kbd> Jump</span>
+        <span>Reach the flag</span>
+      </div>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (
         <div className={s.win} role="dialog" aria-label="You win">

@@ -93,8 +93,11 @@ export class MoverSession {
       if (cur.state !== "tracking") {
         // A note that is still lost: trust SAM's spot and learn its colour again from that same frame,
         // as a lost note under a new shadow or light may no longer fit the old range.
+        // A colour that also fits the rest of the picture means SAM boxed the desk, not the note. Learning it would
+        // lock the tracker onto the desk for good, so wait for a better answer.
         const sig = signature(cap.frame, m.box);
-        if (sig.ok) this.tracker.setSignature(m.id, sig.hsv);
+        if (!sig.ok || sig.warning) continue;
+        this.tracker.setSignature(m.id, sig.hsv);
         this.tracker.reanchor(m.id, m.x, m.y, now);
         changed = true;
         found++;

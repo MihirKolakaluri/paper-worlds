@@ -34,7 +34,7 @@ describe("plain errors", () => {
 
 describe("iphoneHint", () => {
   it("is quiet when the iPhone is listed", () => { expect(iphoneHint([mac, desk], SAFARI)).toBeNull(); });
-  it("says how to open Continuity Camera", () => { expect(iphoneHint([mac], SAFARI)).toContain("Open Continuity Camera: iPhone near Mac, same Apple ID"); });
+  it("says how to get the iPhone listed", () => { expect(iphoneHint([mac], SAFARI)).toContain("Lock it and keep it near your Mac"); });
   it("tells Chrome users to try Safari", () => {
     expect(iphoneHint([mac], CHROME)).toMatch(/use Safari/i);
     expect(iphoneHint([mac], SAFARI)).not.toMatch(/use Safari/i);

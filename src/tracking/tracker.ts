@@ -6,6 +6,7 @@ import { hsvMatch, rgbToHsv } from "./signatures";
 export const PROC_W = 320; // frames arrive at this width
 const STEP = 2; // read every 2nd pixel each way
 const HOLD_MS = 500, FADE_MS = 500;
+const MAX_GROW = 4;
 const SNAP_AFTER_MS = 100; // back from a gap this long: jump to the note, don't smooth across it
 
 /** One-euro filter: smooths hard when still, gets out of the way when moving fast. */
@@ -55,7 +56,7 @@ export function findBlobs(mask: Uint8Array, gw: number, gh: number, minN: number
 
 export type TrackState = "tracking" | "held" | "fading" | "gone";
 export type Track = { id: string; x: number; y: number; state: TrackState; alpha: number; lostMs: number };
-type Entry = Track & { sig: Hsv; minN: number; fx: OneEuro; fy: OneEuro; lostAt: number | null; seenAt: number };
+type Entry = Track & { sig: Hsv; minN: number; maxN: number; fx: OneEuro; fy: OneEuro; lostAt: number | null; seenAt: number };
 
 export class Tracker {
   private notes: Entry[] = [];
@@ -67,7 +68,7 @@ export class Tracker {
 
   /** areaPx is the note's size on the processing frame; it sets how small a blob still counts. */
   add(id: string, sig: Hsv, x: number, y: number, areaPx: number) {
-    this.notes.push({ id, x, y, state: "tracking", alpha: 1, lostMs: 0, sig, minN: Math.max(6, (areaPx / (STEP * STEP)) * 0.15), fx: new OneEuro(), fy: new OneEuro(), lostAt: null, seenAt: -Infinity });
+    this.notes.push({ id, x, y, state: "tracking", alpha: 1, lostMs: 0, sig, minN: Math.max(6, (areaPx / (STEP * STEP)) * 0.15), maxN: (areaPx / (STEP * STEP)) * MAX_GROW, fx: new OneEuro(), fy: new OneEuro(), lostAt: null, seenAt: -Infinity });
   }
   remove(id: string) { this.notes = this.notes.filter(n => n.id !== id); }
   get(id: string): Track | undefined { return this.notes.find(n => n.id === id); }
@@ -97,6 +98,7 @@ export class Tracker {
       // Big and close wins. A blob another note already claimed is off the table.
       let best: Blob | null = null, score = 0;
       for (const b of blobs) {
+        if (b.n > n.maxN) continue; // far bigger than the note: a desk or a wall, not a note lifted nearer the camera
         if (taken.some(t => Math.abs(t.x - b.x) < 1 && Math.abs(t.y - b.y) < 1)) continue;
         const sc = b.n / (1 + (Math.hypot(b.x - n.x, b.y - n.y) / 60) ** 2);
         if (sc > score) { score = sc; best = b; }

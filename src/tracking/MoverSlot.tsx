@@ -144,15 +144,19 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {error && <span className={s.error} role="alert">{error}</span>}
       <button className={s.btn} disabled={!hooks} onClick={start}>Add sticky notes</button>
-      <span className={s.hint}>Point a camera down at your desk and a real sticky note becomes a bridge in this game.</span>
+      <span className={s.tag}>Use a real sticky note as a bridge</span>
     </div>
   );
 
   const lost = stats?.lost ?? 0;
   return (
     <div className={s.bar} onClick={release}>
-      {phase === "live" && <span className={s.status} aria-live="polite">{lost ? "Looking for a lost note…" : "Your note is a bridge. Slide it under you to cross the lava."}</span>}
-      {phase === "live" && <button className={s.ghost} onClick={turn}>Note moves the wrong way? Turn picture</button>}
+      {phase === "live" && (
+        <div className={s.note} aria-live="polite">
+          {lost ? <b>Looking for your note…</b> : <><b>Your note is a bridge</b><span>Slide it under you to cross the lava</span></>}
+        </div>
+      )}
+      {phase === "live" && <button className={s.ghost} onClick={turn}>Wrong way? Turn picture</button>}
       {hidden && <button className={s.btn} onClick={() => setHidden(false)}>Show camera</button>}
       {debug && stats && (
         <div className={s.hud} data-testid="mover-hud">
@@ -193,7 +197,13 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
               <button className={s.ghost} onClick={redoCorners}>Line up with my drawing</button>
             </div>
           )}
-          {phase === "find" && <p className={s.hint}>Put a bright blue or green note where the camera can see it and keep your hands out of the picture. It will be found by itself.</p>}
+          {phase === "find" && (
+            <ol className={s.steps}>
+              <li>Put a blue or green note on your desk</li>
+              <li>Move your hands away</li>
+              <li>{finding ? "Looking for it…" : "It shows up in the game by itself"}</li>
+            </ol>
+          )}
           {warnings.map(w => <p key={w} className={s.warn}>{w}</p>)}
         </>}
         {error && <p className={s.error} role="alert">{error}</p>}
