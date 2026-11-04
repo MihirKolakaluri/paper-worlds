@@ -11,6 +11,8 @@ import { surfLevel } from "./level";
 import p from "@/app/play/play.module.css";
 import s from "./surf.module.css";
 
+const BEST_KEY = "pw-surf-best";
+
 export default function SurfClient() {
   const [level, setLevel] = useState<Level | null>(null);
   const [failed, setFailed] = useState(false);
@@ -20,18 +22,30 @@ export default function SurfClient() {
   const [falls, setFalls] = useState(0);
   const [won, setWon] = useState(false);
   const [note, setNote] = useState(false);
+  const [best, setBest] = useState(0);
+  const dodgedNow = useRef(0);
   const stage = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { loadSample("a").then(l => setLevel(surfLevel(l))).catch(() => setFailed(true)); }, []);
+  useEffect(() => {
+    loadSample("a").then(l => setLevel(surfLevel(l))).catch(() => setFailed(true));
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- storage only exists after mount
+      setBest(Number(localStorage.getItem(BEST_KEY)) || 0);
+    } catch { /* blocked storage: the best score just lasts this visit */ }
+  }, []);
 
   const onReady = useCallback((h: Hooks) => {
     setHooks(h);
     h.onEvent(e => {
       if (e.type === "progress") setPct(e.pct);
-      if (e.type === "dodge") setDodged(n => n + 1);
+      if (e.type === "dodge") { dodgedNow.current++; setDodged(n => n + 1); }
       if (e.type === "die") setFalls(n => n + 1);
-      if (e.type === "win") setWon(true);
-      if (e.type === "start") { setWon(false); setDodged(0); setFalls(0); setPct(0); }
+      if (e.type === "win") {
+        setWon(true);
+        const score = dodgedNow.current;
+        setBest(b => { if (score <= b) return b; try { localStorage.setItem(BEST_KEY, String(score)); } catch { /* same */ } return score; });
+      }
+      if (e.type === "start") { dodgedNow.current = 0; setWon(false); setDodged(0); setFalls(0); setPct(0); }
       if (e.type === "ride") setNote(!!e.id && e.id !== DEMO_MOVER_ID);
       if (e.type === "ride" && e.id === null) setNote(false);
     });
@@ -79,7 +93,7 @@ export default function SurfClient() {
         <div className={p.win} role="dialog" aria-label="You win">
           <div className={p.card}>
             <h2>You made it!</h2>
-            <p>{dodged} dodged. {falls === 0 ? "Not a scratch." : `${falls} hit${falls === 1 ? "" : "s"}.`}</p>
+            <p>{dodged} dodged. {falls === 0 ? "Not a scratch." : `${falls} hit${falls === 1 ? "" : "s"}.`} Your best is {best}.</p>
             <div className={p.row}>
               <button className={p.btn} autoFocus onClick={() => hooks?.restart()}>Surf again</button>
               <Link className={p.btnGhost} href="/make">Draw your own game</Link>

@@ -15,6 +15,8 @@ type PhaserNS = typeof import("phaser");
 type Arcade = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 
 
+const HIT_STOP_MS = 90;
+
 export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game: Phaser.Game; hooks: Hooks } {
   const T = level.tileSize, W = level.width * T, H = level.height * T;
   const { PH, PW, JUMP, RUN, jumpH } = physicsFor(level.spawn.h, T, level.jumpH);
@@ -227,6 +229,10 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.dead = true; this.deaths++; this.surfHits++;
       this.scribbles.clear(true, true); this.rideStart = this.time.now; this.nextScribbleAt = this.time.now + 1500;
       this.cameras.main.shake(140, 0.008); this.cameras.main.flash(160, 255, 90, 70);
+      if (level.surf) { // a short freeze and a burst make a hit land instead of just happening
+        this.dust.explode(12, this.player.x, this.player.y);
+        this.physics.pause(); this.time.delayedCall(HIT_STOP_MS, () => this.physics.resume());
+      }
       this.hero.setTint(0xff3b3b);
       fire({ type: "die" });
       this.runRules(r => r.trigger.type === "touch" && r.trigger.target === "lava");
