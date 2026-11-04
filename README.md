@@ -58,3 +58,7 @@ For the sticky notes use Safari if you want your iPhone as the camera, since Chr
 - Libraries: Next.js (MIT), React (MIT), Phaser (MIT), zod (MIT) and the OpenAI SDK (Apache 2.0), which talks to Meta's API.
 - Fonts: Geist and Patrick Hand from Google Fonts.
 - Sound effects in the demo video come from Pixabay under the Pixabay Content License: UI Success Chime and Sci-Fi UI Click Sound by SoundShelfStudio and Thin Swoosh by Universfield. The music was made in code for this video.
+
+## License
+
+MIT. See `LICENSE`.
