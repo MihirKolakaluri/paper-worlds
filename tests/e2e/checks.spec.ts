@@ -72,7 +72,7 @@ test.describe("desktop", () => {
     await page.waitForTimeout(1300);
     await expect(page.getByRole("button", { name: "Remove the platform" })).toBeVisible();
     const box = (await page.locator("canvas").boundingBox())!, lvl = await (await page.request.get(`${BASE}/samples/a.json`)).json();
-    const k = box.width / (lvl.width * 8), s0 = await state(page);
+    const k = box.width / (lvl.width * 8);
     const sx = (x: number) => box.x + x * k, sy = (y: number) => box.y + y * k;
     const px = 500, py = 594; // open air past the drawn platform, top about 46 px above the ground
     await page.mouse.move(sx(px), sy(py));

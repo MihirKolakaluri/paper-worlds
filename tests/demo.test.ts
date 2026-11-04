@@ -18,6 +18,10 @@ describe("Try it now samples", () => {
     expect(level.image).toBe(`/samples/${id}.jpg`);
     expect(checkReach(level)).toEqual({ landed: true, reachable: true });
   });
+  it("a flag you can only graze at full stretch doesn't count as reachable", () => {
+    const level = Level.parse(JSON.parse(readFileSync("public/samples/b.json", "utf8")));
+    expect(checkReach({ ...level, jumpH: 207 }).reachable).toBe(false); // the old sample b: a 10 px window to win
+  });
   it("sample b's top platform is a real jump, not a pixel-perfect graze of the flag", () => {
     const level = Level.parse(JSON.parse(readFileSync("public/samples/b.json", "utf8")));
     expect(level.jumpH).toBeGreaterThanOrEqual(304 - 96 + 24); // third platform to top platform, plus room

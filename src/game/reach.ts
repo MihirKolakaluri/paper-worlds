@@ -42,12 +42,12 @@ export function checkReach(level: Level): Reach {
     return d < 0 ? -1 : (JUMP + Math.sqrt(d)) / GRAVITY;
   };
   const maxReach = RUN * airtime(-rows * T) + PW;
-  const g = level.goal, gx0 = g.x * T, gx1 = (g.x + g.w) * T, gy0 = g.y * T, gy1 = (g.y + g.h) * T;
+  const g = level.goal, gx0 = g.x * T, gx1 = (g.x + g.w) * T, gy1 = (g.y + g.h) * T;
   const hitsGoal = (c: number, r: number) => {
     const feet = r * T, x = c * T + T / 2;
     const dx = Math.max(0, gx0 - x, x - gx1);
-    if (gy0 > feet + 1e4 || gy1 < feet - jumpH - PH + 4) return false;
-    return dx <= RUN * (2 * JUMP / GRAVITY) * 0.9 + PW / 2;
+    if (gy1 < feet - jumpH * 0.85 - PH + 4) return false; // room to spare: a real hand misses a full-stretch graze
+    return dx <= RUN * (2 * JUMP / GRAVITY) * 0.6 + PW / 2;
   };
 
   const seen = new Uint8Array(spots.length), queue = [id.get(start[1] * cols + start[0])!];

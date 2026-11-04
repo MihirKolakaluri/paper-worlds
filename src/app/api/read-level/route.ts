@@ -32,7 +32,7 @@ const Marks = z.object({ marks: z.array(z.object({ kind: z.enum(["platform", "la
 export const POST = guarded(async (req: Request) => {
   const raw = await req.text();
   if (raw.length > 3_000_000) return Response.json({ error: "That photo is too big. Try again, it will be shrunk first." }, { status: 413 });
-  const parsed = Body.safeParse(JSON.parse(raw || "{}"));
+  const parsed = Body.safeParse((() => { try { return JSON.parse(raw || "{}"); } catch { return null; } })());
   if (!parsed.success) return Response.json({ error: "No photo came through. Snap it again." }, { status: 400 });
   const { image, w, h } = parsed.data;
 
