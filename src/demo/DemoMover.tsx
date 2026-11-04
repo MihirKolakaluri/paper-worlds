@@ -20,8 +20,8 @@ export default function DemoMover({ hooks, level, stage }: { hooks: Hooks | null
       hooks.setMoverTarget(DEMO_MOVER_ID, p.x, p.y);
     };
     el.addEventListener("pointermove", move);
-    el.style.touchAction = "none"; // a finger steers the platform instead of scrolling the page
-    return () => { el.removeEventListener("pointermove", move); el.style.touchAction = ""; hooks.removeMover(DEMO_MOVER_ID); };
+    el.style.setProperty("touch-action", "none"); // a finger steers the platform instead of scrolling the page
+    return () => { el.removeEventListener("pointermove", move); el.style.removeProperty("touch-action"); hooks.removeMover(DEMO_MOVER_ID); };
   }, [on, hooks, level, stage]);
 
   return (
