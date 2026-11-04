@@ -11,6 +11,7 @@ import s from "./moverSlot.module.css";
 export const MOVERS_ENABLED = true;
 
 const CORNERS = ["top left", "top right", "bottom right", "bottom left"];
+const AUTO_FIND_MS = 5000, AUTO_FIND_TRIES = 12;
 type Phase = "off" | "opening" | "corners" | "find" | "live";
 
 const noSubscribe = () => () => {};
@@ -63,7 +64,9 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
       await r.open(id);
       if (rig.current !== r) return;
       saveCameraId(id);
-      setPhase("corners");
+      r.useWholeFrame();
+      setCorners(4);
+      setPhase("find");
     } catch (e) {
       if (rig.current !== r) return;
       r.close(); rig.current = null;
@@ -84,10 +87,11 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     setError(null); setCamId(id); setCamLost(false);
     try {
       r.session.clear(); // positions from the old camera mean nothing on the new one
-      r.corners = []; setCorners(0);
       await r.open(id);
       saveCameraId(id);
-      setPhase("corners");
+      r.useWholeFrame();
+      setCorners(4);
+      setPhase("find");
     } catch (e) { setError(cameraError(e)); }
   };
 
@@ -104,20 +108,32 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
   const wholeFrame = () => { const r = rig.current; if (!r) return; r.useWholeFrame(); setCorners(4); setError(null); setPhase(r.session.count ? "live" : "find"); };
   const redoCorners = () => { const r = rig.current; if (!r) return; r.corners = []; setCorners(0); setPhase("corners"); };
 
-  const find = async () => {
+  const find = async (auto = false) => {
     const r = rig.current;
     if (!r || finding) return;
-    setFinding(true); setError(null); setWarnings([]);
+    setFinding(true); if (!auto) setError(null); setWarnings([]);
     const res = await r.findNotes();
     setFinding(false);
     if (rig.current !== r) return;
-    setError(res.error ?? null);
+    if (!auto || r.session.count) setError(res.error ?? null);
     setWarnings(res.warnings);
     if (r.session.count) {
       setPhase("live");
       if (!res.error && !res.warnings.length) setHidden(true); // out of the way of the game; "Show camera" brings it back
     }
   };
+
+  // Looks for the note by itself for a minute, so most people never need the button.
+  const autoFind = useRef(find);
+  useEffect(() => { autoFind.current = find; });
+  useEffect(() => {
+    if (phase !== "find") return;
+    let tries = 0;
+    const id = setInterval(() => { if (++tries > AUTO_FIND_TRIES) clearInterval(id); else void autoFind.current(true); }, AUTO_FIND_MS);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  const turn = () => { const r = rig.current; if (r) r.useWholeFrame(r.turns + 1); };
 
   const removeLast = () => { const r = rig.current; if (!r) return; r.session.removeLast(); setWarnings([]); if (!r.session.count) setPhase("find"); };
 
@@ -128,6 +144,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {error && <span className={s.error} role="alert">{error}</span>}
       <button className={s.btn} disabled={!hooks} onClick={start}>Add sticky notes</button>
+      <span className={s.hint}>Point a camera down at your desk and a real sticky note becomes a platform in this game.</span>
     </div>
   );
 
@@ -136,6 +153,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
   return (
     <div className={s.bar} onClick={release}>
       {phase === "live" && <span className={s.status} aria-live="polite">{lost ? "Looking for a lost note…" : `Following ${notes} note${notes === 1 ? "" : "s"}`}</span>}
+      {phase === "live" && <button className={s.ghost} onClick={turn}>Note moves the wrong way? Turn picture</button>}
       {hidden && <button className={s.btn} onClick={() => setHidden(false)}>Show camera</button>}
       {debug && stats && (
         <div className={s.hud} data-testid="mover-hud">
@@ -171,12 +189,12 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
           </>}
           {phase !== "corners" && (
             <div className={s.row}>
-              <button className={s.btn} disabled={finding} onClick={find}>{finding ? "Looking…" : phase === "live" ? "Find more notes" : "Find notes"}</button>
+              <button className={s.btn} disabled={finding} onClick={() => void find()}>{finding ? "Looking…" : phase === "live" ? "Find more notes" : "Find notes"}</button>
               {phase === "live" && <button className={s.ghost} onClick={removeLast}>Remove last note</button>}
-              <button className={s.ghost} onClick={redoCorners}>Redo corners</button>
+              <button className={s.ghost} onClick={redoCorners}>Line up with my drawing</button>
             </div>
           )}
-          {phase === "find" && <p className={s.hint}>Put a bright blue or green note on the paper, keep your hands clear, then press Find notes.</p>}
+          {phase === "find" && <p className={s.hint}>Put a bright blue or green note where the camera can see it and keep your hands out of the picture. It will be found by itself.</p>}
           {warnings.map(w => <p key={w} className={s.warn}>{w}</p>)}
         </>}
         {error && <p className={s.error} role="alert">{error}</p>}

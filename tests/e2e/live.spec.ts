@@ -27,15 +27,13 @@ test("camera panel: stopping during Find notes leaves nothing stuck", async ({ p
   await page.waitForTimeout(2500);
 
   await page.getByRole("button", { name: "Add sticky notes" }).click();
-  await page.getByRole("button", { name: "Use the whole picture" }).click({ timeout: 15_000 });
-  await page.getByRole("button", { name: "Find notes" }).click();
+  await page.getByRole("button", { name: "Find notes" }).click({ timeout: 15_000 });
   await page.getByRole("button", { name: "Stop camera" }).click();
 
   await page.waitForTimeout(6000); // let the SAM call land after the stop
   await page.getByRole("button", { name: "Add sticky notes" }).click();
-  await page.getByRole("button", { name: "Use the whole picture" }).click({ timeout: 15_000 });
   const find = page.getByRole("button", { name: "Find notes" });
-  await expect(find).toBeEnabled();
+  await expect(find).toBeEnabled({ timeout: 15_000 });
   await find.click();
   await expect(page.getByRole("alert").or(page.getByText(/Following/)).first()).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Stop camera" }).click();

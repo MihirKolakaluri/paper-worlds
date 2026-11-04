@@ -10,6 +10,12 @@ const cross = (a: Pt, b: Pt, c: Pt) => (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a
 
 export function fullFrameCorners(w: number, h: number): Pt[] { return [[0, 0], [w, 0], [w, h], [0, h]]; }
 
+/** The whole picture, turned in quarter steps. A phone looking down has no "up", so the player picks it. */
+export function turnedCorners(w: number, h: number, turns: number): Pt[] {
+  const c = fullFrameCorners(w, h);
+  return c.map((_, i) => c[(i + turns) % 4]);
+}
+
 export function calibrate(corners: Pt[], levelW: number, levelH: number, minArea = 400): Calibration {
   const bad: Calibration = { ok: false, error: "Those corners don't make a page. Click them again in order around the paper." };
   if (corners.length !== 4) return bad;

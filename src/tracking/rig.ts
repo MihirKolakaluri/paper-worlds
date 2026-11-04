@@ -2,7 +2,7 @@
 // All the decisions live in session.ts and reanchor.ts, which are tested without a browser.
 import type { Img, Pt } from "@/level/ink";
 import type { Box } from "@/lib/sam";
-import { calibrate, fullFrameCorners } from "./calibrate";
+import { calibrate, turnedCorners } from "./calibrate";
 import { openCamera } from "./camera";
 import { postFrame, ReanchorLoop, type Capture } from "./reanchor";
 import { MoverSession, type SessionHooks } from "./session";
@@ -17,6 +17,8 @@ type Level = { w: number; h: number; tile: number };
 export class Rig {
   readonly session: MoverSession;
   corners: Pt[] = [];
+  turns = 0;
+  private whole = false;
   /** The preview canvas, set by the panel. */
   view: HTMLCanvasElement | null = null;
 
@@ -75,6 +77,7 @@ export class Rig {
 
   /** Adds a clicked corner. Returns an error, or null. Calibrates on the 4th. */
   addCorner(x: number, y: number): string | null {
+    this.whole = false;
     this.corners.push([x * this.proc.width, y * this.proc.height]);
     if (this.corners.length < 4) return null;
     const c = calibrate(this.corners, this.level.w, this.level.h);
@@ -83,8 +86,10 @@ export class Rig {
     return null;
   }
 
-  useWholeFrame() {
-    this.corners = fullFrameCorners(this.proc.width, this.proc.height);
+  useWholeFrame(turns = 0) {
+    this.turns = turns % 4;
+    this.whole = true;
+    this.corners = turnedCorners(this.proc.width, this.proc.height, this.turns);
     const c = calibrate(this.corners, this.level.w, this.level.h);
     if (c.ok) this.session.setCalibration(c.H);
   }
@@ -135,7 +140,7 @@ export class Rig {
     if (v.readyState < 2 || !v.videoWidth || v.currentTime === this.lastT) return; // no new camera frame yet
     this.lastT = v.currentTime;
     const W = PROC_W, H = Math.round(PROC_W * v.videoHeight / v.videoWidth);
-    if (this.proc.width !== W || this.proc.height !== H) { this.proc.width = W; this.proc.height = H; }
+    if (this.proc.width !== W || this.proc.height !== H) { this.proc.width = W; this.proc.height = H; if (this.whole) this.useWholeFrame(this.turns); }
 
     const t0 = performance.now();
     if (this.session.count) {

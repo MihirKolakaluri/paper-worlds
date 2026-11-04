@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boxToLevel, calibrate, fullFrameCorners, noteShape, toLevel } from "@/tracking/calibrate";
+import { boxToLevel, calibrate, fullFrameCorners, noteShape, toLevel, turnedCorners } from "@/tracking/calibrate";
 import type { Pt } from "@/level/ink";
 
 const LW = 640, LH = 320;
@@ -55,5 +55,21 @@ describe("calibrate", () => {
     expect(shape[0].length).toBe(6);
     expect(shape.flat().every(Boolean)).toBe(true);
     expect(noteShape({ w: 2, h: 2 }, 8)).toEqual([[true, true]]); // never smaller than the engine's minimum
+  });
+});
+
+describe("turnedCorners", () => {
+  const W = 320, H = 240, LW = 640, LH = 320;
+  const map = (turns: number) => { const c = calibrate(turnedCorners(W, H, turns), LW, LH); if (!c.ok) throw new Error(c.error); return (x: number, y: number) => toLevel(c.H, x, y); };
+  it("no turns is the plain whole picture", () => {
+    expect(turnedCorners(W, H, 0)).toEqual(fullFrameCorners(W, H));
+  });
+  it("one turn swaps the directions: moving a note down the picture moves the platform across the level", () => {
+    const f = map(1), a = f(W, 0), b = f(W, H);
+    expect(a[0]).toBeCloseTo(0); expect(a[1]).toBeCloseTo(0);
+    expect(b[0]).toBeCloseTo(LW); expect(b[1]).toBeCloseTo(0);
+  });
+  it("four turns come back to the start", () => {
+    expect(turnedCorners(W, H, 4)).toEqual(fullFrameCorners(W, H));
   });
 });
