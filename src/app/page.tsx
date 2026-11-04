@@ -12,7 +12,7 @@ export default function Home() {
         <Link className={s.btnGhost} href="/make">Make your own</Link>
       </div>
       <figure className={s.drawing}>
-        <img src="/samples/a.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={665} />
+        <img src="/samples/a-hero.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={590} />
         <figcaption>Play this sample instantly. No camera or setup needed.</figcaption>
       </figure>
       <section className={s.how} aria-label="How it works">
