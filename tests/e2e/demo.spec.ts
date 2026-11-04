@@ -28,6 +28,12 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-play.png` });
     await expect(page.getByRole("button", { name: "Remove the platform" })).toBeVisible();
 
+    await page.getByRole("button", { name: /Lava rises every 5 seconds/ }).click();
+    await expect(page.getByText("Lava rises every 5 seconds").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /mic/i })).toHaveCount(0);
+    await page.waitForTimeout(6000);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-rule.png` });
+
     await page.getByRole("link", { name: "Lava run" }).click();
     await expect(page).toHaveURL(/demo=b/);
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });

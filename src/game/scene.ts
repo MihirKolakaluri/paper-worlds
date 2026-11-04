@@ -4,7 +4,7 @@ import type { Level } from "@/schema/level";
 import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 import type { GameEvent, GameState, Hooks, HudEvent } from "./hooks";
-import { clampRaise, clampSpeed, rulesFor, type Active } from "./rules";
+import { clampRaise, clampSpeed, rulesFor, spawnSpot, type Active } from "./rules";
 import { buildArt, PAPER } from "./art";
 import { BUFFER_MS, COYOTE_MS, GRAVITY, physicsFor } from "./physics";
 
@@ -14,7 +14,7 @@ type Arcade = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 
 export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game: Phaser.Game; hooks: Hooks } {
   const T = level.tileSize, W = level.width * T, H = level.height * T;
-  const { PH, PW, JUMP, RUN } = physicsFor(level.spawn.h, T, level.jumpH);
+  const { PH, PW, JUMP, RUN, jumpH } = physicsFor(level.spawn.h, T, level.jumpH);
   const tickCbs = new Set<(s: GameState) => void>(), eventCbs = new Set<(e: HudEvent) => void>();
   const fire = (e: HudEvent) => eventCbs.forEach(cb => cb(e));
   let scene: PlayScene | null = null;
@@ -39,6 +39,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     layer!: Phaser.Tilemaps.TilemapLayer;
     keys!: Record<string, Phaser.Input.Keyboard.Key>;
     lavaGfx!: Phaser.GameObjects.Graphics;
+    extraGfx!: Phaser.GameObjects.Graphics;
     debugOn = false;
     lavaRise = 0; // px of extra lava from the bottom (raise_lava)
     speedMul = 1;
@@ -117,6 +118,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.physics.add.collider(this.player, this.moverGroup);
 
       this.lavaGfx = this.add.graphics().setDepth(4);
+      this.extraGfx = this.add.graphics().setDepth(3);
       const goal = this.add.zone(level.goal.x * T, level.goal.y * T, level.goal.w * T, level.goal.h * T).setOrigin(0);
       this.physics.add.existing(goal, true);
       this.physics.add.overlap(this.player, goal, () => this.win());
@@ -185,6 +187,8 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
     spawn() {
       this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
+      // risen lava drops back below the start, or you would respawn into it and die forever
+      this.lavaRise = Math.min(this.lavaRise, Math.max(0, H - level.spawn.y * T - PH - 2 * T));
       this.dead = false; this.cut = false; this.jumpPressedAt = -1e9;
       if (this.hero && !this.intro) { this.hero.clearTint().setAlpha(1).setScale(0); this.tweens.add({ targets: this.hero, scale: this.heroScale, duration: 260, ease: "Back.out" }); }
     }
@@ -213,8 +217,8 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     resetLevel() {
       this.won = false; this.lavaRise = 0; this.speedMul = 1; this.frozenUntil = 0;
       if (this.flipped) { this.flipped = false; this.physics.world.gravity.y = GRAVITY; this.setOneWay(); }
-      this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = [];
-      this.rules.forEach(a => { a.fired = 0; a.nextAt = this.time.now + this.timerMs(a.rule); });
+      this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = []; this.drawExtra();
+      this.rules.forEach(a => { a.fired = 0; a.raised = 0; a.tiles = []; a.nextAt = this.time.now + this.timerMs(a.rule); });
       this.player.body.setAllowGravity(true);
       this.spawn();
       fire({ type: "start" });
@@ -223,24 +227,59 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     // ---------- rules ----------
     timerMs(r: Rule) { return r.trigger.type === "timer" ? r.trigger.sec * 1000 : Infinity; }
     applyRule(rule: Rule) { this.removeRule(rule.id); this.rules.push({ rule, fired: 0, nextAt: this.time.now + this.timerMs(rule) }); }
-    removeRule(id: string) { this.rules = this.rules.filter(a => a.rule.id !== id); }
+    /** Removing a rule also takes back what it did, so × means undo and not just "stop". */
+    removeRule(id: string) {
+      const gone = this.rules.find(a => a.rule.id === id);
+      this.rules = this.rules.filter(a => a.rule.id !== id);
+      if (!gone?.fired) return;
+      switch (gone.rule.action.type) {
+        case "raise_lava": this.lavaRise = Math.max(0, this.lavaRise - (gone.raised ?? 0)); break;
+        case "flip_gravity": if (gone.fired % 2) this.flip(); break;
+        case "speed": {
+          const last = this.rules.filter(a => a.fired && a.rule.action.type === "speed").at(-1)?.rule.action;
+          this.speedMul = last?.type === "speed" ? clampSpeed(last.x) : 1; break;
+        }
+        case "spawn_platform": {
+          const mine = new Set((gone.tiles ?? []).map(t => t.join()));
+          (gone.tiles ?? []).forEach(([c, r]) => this.layer.removeTileAt(c, r));
+          this.extraTiles = this.extraTiles.filter(t => !mine.has(t.join())); this.drawExtra(); break;
+        }
+        case "freeze_movers": this.frozenUntil = 0; break;
+      }
+    }
     trigger(e: GameEvent) { this.runRules(r => r.trigger.type === e); }
     runRules(match: (r: Rule) => boolean) {
-      for (const a of rulesFor(this.rules, match)) { a.fired++; this.act(a.rule); fire({ type: "rule", id: a.rule.id }); }
+      for (const a of rulesFor(this.rules, match)) { a.fired++; this.act(a); fire({ type: "rule", id: a.rule.id }); }
     }
-    act(rule: Rule) {
-      const a = rule.action;
+    flip() {
+      this.flipped = !this.flipped; this.physics.world.gravity.y = this.flipped ? -GRAVITY : GRAVITY;
+      this.player.setFlipY(this.flipped); this.setOneWay();
+    }
+    /** The tile layer is invisible (the drawing is the art), so platforms from rules need their own ink. */
+    drawExtra() {
+      this.extraGfx.clear().fillStyle(0x1f2433);
+      for (const [c, r] of this.extraTiles) this.extraGfx.fillRect(c * T, r * T + (this.flipped ? T - 3 : 0), T, 3);
+    }
+    act(active: Active) {
+      const a = active.rule.action;
       switch (a.type) {
-        case "raise_lava": this.lavaRise = Math.min(H * 0.6, this.lavaRise + clampRaise(a.px)); break;
-        case "flip_gravity":
-          this.flipped = !this.flipped; this.physics.world.gravity.y = this.flipped ? -GRAVITY : GRAVITY;
-          this.player.setFlipY(this.flipped); this.setOneWay(); break;
+        case "raise_lava": {
+          const next = Math.min(H * 0.6, this.lavaRise + clampRaise(a.px));
+          active.raised = (active.raised ?? 0) + next - this.lavaRise; this.lavaRise = next; break;
+        }
+        case "flip_gravity": this.flip(); this.drawExtra(); break;
         case "spawn_platform": {
-          const c0 = Math.max(0, Math.round(a.x)), r = Math.max(0, Math.min(level.height - 1, Math.round(a.y)));
-          for (let c = c0; c < Math.min(level.width, c0 + Math.max(2, Math.round(a.w))); c++) {
-            if (this.layer.getTileAt(c, r)) continue;
-            const t = this.layer.putTileAt(1, c, r); t.setCollision(false, false, !this.flipped, this.flipped); this.extraTiles.push([c, r]);
+          const b = this.player.body, w = Math.max(2, Math.round(a.w));
+          const near = a.x < 0 || a.y < 0;
+          const spot = near ? spawnSpot({ x: this.player.x, feetY: b.bottom, headY: b.top, flipped: this.flipped, facing: this.player.flipX ? -1 : 1,
+            onFloor: this.flipped ? b.blocked.up || b.touching.up : b.blocked.down || b.touching.down }, T, level.width, level.height, w, jumpH) : a;
+          const c0 = Math.max(0, Math.round(spot.x)), r = Math.max(0, Math.min(level.height - 1, Math.round(spot.y)));
+          for (let c = c0; c < Math.min(level.width, c0 + w); c++) {
+            if ((this.layer.getTileAt(c, r)?.index ?? 0) > 0) continue; // empty cells are index 0 tiles, not null
+            const t = this.layer.putTileAt(1, c, r); t.setCollision(false, false, !this.flipped, this.flipped);
+            this.extraTiles.push([c, r]); (active.tiles ??= []).push([c, r]);
           }
+          this.drawExtra();
           break;
         }
         case "speed": this.speedMul = clampSpeed(a.x); break;
@@ -309,7 +348,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       }
       // timers
       for (const a of this.rules) if (time >= a.nextAt && (a.rule.mode === "every" || a.fired === 0)) {
-        a.fired++; a.nextAt = time + this.timerMs(a.rule); this.act(a.rule); fire({ type: "rule", id: a.rule.id });
+        a.fired++; a.nextAt = time + this.timerMs(a.rule); this.act(a); fire({ type: "rule", id: a.rule.id });
       }
       // movers chase their targets by velocity (never setPosition, which would tunnel the player)
       const frozen = time < this.frozenUntil;

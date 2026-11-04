@@ -1,0 +1,4 @@
+{
+  "sentence": "flip gravity when I clap",
+  "output_text": "{\"action\":  {\"amount\": 0, \"type\": \"flip_gravity\"}, \"error\": \"\", \"mode\": \"every\", \"ok\": true, \"text\": \"Flip gravity when I clap\", \"trigger\": {\"sec\": 0, \"target\": \"none\", \"type\": \"clap\"}}"
+}

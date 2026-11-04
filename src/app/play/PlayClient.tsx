@@ -5,9 +5,11 @@ import Game from "@/game/Game";
 import type { Hooks, Input } from "@/game/hooks";
 import { Level } from "@/schema/level";
 import { loadLevel } from "@/lib/levelStore";
+import RuleSlot from "@/rules/RuleSlot";
 import demo from "../../../fixtures/level-demo.json";
 import DemoMover from "@/demo/DemoMover";
 import { SAMPLES, loadSample, sampleById } from "@/demo/samples";
+import { PRESETS } from "@/demo/presets";
 import d from "@/demo/demo.module.css";
 import s from "./play.module.css";
 
@@ -62,6 +64,7 @@ export default function PlayClient() {
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
       <div ref={stage} className={s.stage}><Game level={level} onReady={onReady} /></div>
+      <RuleSlot hooks={hooks} presets={sample ? PRESETS : undefined} demo={!!sample} />
       {sample && <DemoMover hooks={hooks} level={level} stage={stage} />}
       {sample && (
         <nav className={d.samples} aria-label="Sample levels">

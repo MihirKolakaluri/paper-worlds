@@ -4,9 +4,21 @@ import type { Rule } from "@/schema/rule";
 export const clampRaise = (px: number) => Math.max(8, Math.min(64, Math.round(px / 8) * 8 || 8));
 export const clampSpeed = (x: number) => Math.max(0.5, Math.min(2.5, x));
 
-export type Active = { rule: Rule; fired: number; nextAt: number };
+/** `raised` and `tiles` remember what this rule did, so × can take it back. */
+export type Active = { rule: Rule; fired: number; nextAt: number; raised?: number; tiles?: [number, number][] };
 
 /** Which rules fire for this trigger. `once` rules fire a single time. */
 export function rulesFor(active: Active[], match: (r: Rule) => boolean): Active[] {
   return active.filter(a => match(a.rule) && (a.rule.mode === "every" || a.fired === 0));
+}
+
+export type PlayerSpot = { x: number; feetY: number; headY: number; onFloor: boolean; flipped: boolean; facing: 1 | -1 };
+
+/** Where a "near the player" platform goes, in tiles: under you in the air, ahead and within a jump on the ground. */
+export function spawnSpot(p: PlayerSpot, T: number, width: number, height: number, w: number, jumpPx = 72): { x: number; y: number } {
+  const col = Math.round(p.x / T), feet = Math.floor(p.feetY / T), head = Math.floor(p.headY / T);
+  const up = Math.max(2, Math.round((jumpPx * 0.6) / T));
+  const x = p.onFloor ? (p.facing > 0 ? col + 2 : col - 2 - w) : Math.round(p.x / T - w / 2);
+  const y = p.onFloor ? (p.flipped ? head + up : feet - up) : (p.flipped ? head - 1 : feet);
+  return { x: Math.max(0, Math.min(width - w, x)), y: Math.max(0, Math.min(height - 1, y)) };
 }
