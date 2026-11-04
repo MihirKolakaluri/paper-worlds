@@ -9,8 +9,8 @@ import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 
 export type GameEvent = "whistle" | "clap";
-export type HudEvent = { type: "win" } | { type: "die" } | { type: "start" } | { type: "rule"; id: string };
-export type GameState = { x: number; y: number; vx: number; vy: number; onFloor: boolean; deaths: number; won: boolean; lavaTop: number; gravityFlipped: boolean };
+export type HudEvent = { type: "win" } | { type: "die" } | { type: "start" } | { type: "rule"; id: string } | { type: "dodge" } | { type: "ride"; on: boolean };
+export type GameState = { x: number; y: number; vx: number; vy: number; onFloor: boolean; deaths: number; won: boolean; lavaTop: number; gravityFlipped: boolean; riding: boolean };
 export type Input = { left: boolean; right: boolean; jump: boolean };
 
 export interface Hooks {
@@ -18,6 +18,8 @@ export interface Hooks {
   /** 1 is fully visible, 0 is invisible. Display only: a mover stays solid until removeMover. */
   setMoverAlpha(id: string, alpha: number): void;
   addMover(m: Mover): void;
+  /** The hero rides this mover instead of walking, and scribbles start. Null hands control back to the keys. */
+  setRide(id: string | null): void;
   removeMover(id: string): void;
   applyRule(rule: Rule): void;
   removeRule(id: string): void;

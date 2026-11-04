@@ -18,10 +18,10 @@ You draw a level with a pen. Dark lines are platforms and red is lava. Add a sti
 
 Then the paper keeps working while you play.
 
-- **Sticky notes are live platforms.** Put a bright note under the camera and it turns into a platform that follows your hand. Move it to catch yourself.
+- **A sticky note is your controller.** Put a bright note under the camera and you ride a pen plank that follows your hand. Steer through your own level and dodge the scribbles flying at you.
 - **Rules change the game.** Type or say something like "make the lava rise every time I whistle" and it happens.
 
-The sample levels are two of my drawings ready to go. Your mouse or finger stands in for the sticky note there and that works from a laptop or a phone.
+The sample levels are two of my drawings ready to go. Press Ride a plank and your mouse or finger stands in for the sticky note, so it works from a laptop or a phone.
 
 ## How it works
 

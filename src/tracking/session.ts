@@ -10,7 +10,7 @@ import { Tracker, type Track } from "./tracker";
 
 const MAX_NOTES = 6;
 const DRIFT_PX = 24; // SAM vs tracker on the same frame, in processing px
-export type SessionHooks = Pick<Hooks, "addMover" | "removeMover" | "setMoverTarget" | "setMoverAlpha">;
+export type SessionHooks = Pick<Hooks, "addMover" | "removeMover" | "setMoverTarget" | "setMoverAlpha" | "setRide">;
 type Note = { mover: Mover; present: boolean; alpha: number; w: number; h: number };
 
 export class MoverSession {
@@ -42,6 +42,7 @@ export class MoverSession {
       this.notes.set(id, { mover, present: true, alpha: 1, w, h });
       this.tracker.add(id, sig.hsv, (box.x1 + box.x2) / 2, (box.y1 + box.y2) / 2, (box.x2 - box.x1) * (box.y2 - box.y1));
       this.hooks.addMover(mover);
+      if (this.notes.size === 1) this.hooks.setRide(id); // the first note is the controller
       added++;
     }
     return { added, warnings: [...warnings] };
@@ -121,5 +122,6 @@ export class MoverSession {
     this.notes.delete(id);
     this.tracker.remove(id);
     this.hooks.removeMover(id);
+    this.hooks.setRide([...this.notes.keys()][0] ?? null);
   }
 }

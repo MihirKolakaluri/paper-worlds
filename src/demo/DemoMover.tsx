@@ -13,6 +13,7 @@ export default function DemoMover({ hooks, level, stage }: { hooks: Hooks | null
     const el = stage.current;
     if (!on || !hooks || !el) return;
     hooks.addMover(demoMover(level));
+    hooks.setRide(DEMO_MOVER_ID);
     const move = (e: PointerEvent) => {
       const canvas = el.querySelector("canvas");
       if (!canvas) return;
@@ -21,15 +22,15 @@ export default function DemoMover({ hooks, level, stage }: { hooks: Hooks | null
     };
     el.addEventListener("pointermove", move);
     el.style.setProperty("touch-action", "none"); // a finger steers the platform instead of scrolling the page
-    return () => { el.removeEventListener("pointermove", move); el.style.removeProperty("touch-action"); hooks.removeMover(DEMO_MOVER_ID); };
+    return () => { el.removeEventListener("pointermove", move); el.style.removeProperty("touch-action"); hooks.setRide(null); hooks.removeMover(DEMO_MOVER_ID); };
   }, [on, hooks, level, stage]);
 
   return (
     <div className={s.bar}>
-      <button className={s.toggle} aria-pressed={on} onClick={e => { setOn(v => !v); if (e.detail > 0) e.currentTarget.blur(); }}>{on ? "Remove the platform" : "Add a moving platform"}</button>
+      <button className={s.toggle} aria-pressed={on} onClick={e => { setOn(v => !v); if (e.detail > 0) e.currentTarget.blur(); }}>{on ? "Stop riding" : "Ride a plank"}</button>
       {on
-        ? <span className={s.hint}><b>Your platform is a bridge</b><br />Steer it under you to cross the lava</span>
-        : <span className={s.hint}>Steer a bridge with your mouse or finger</span>}
+        ? <span className={s.hint}><b>Steer with your mouse or finger</b><br />Dodge the scribbles and reach the flag</span>
+        : <span className={s.hint}>Steer with your mouse or finger. A real sticky note does this under a camera.</span>}
     </div>
   );
 }

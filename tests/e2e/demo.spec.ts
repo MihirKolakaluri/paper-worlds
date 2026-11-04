@@ -26,12 +26,12 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     await expect(canvas).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(2500);
 
-    await page.getByRole("button", { name: "Add a moving platform" }).click();
+    await page.getByRole("button", { name: "Ride a plank" }).click();
     const box = (await canvas.boundingBox())!;
     await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.35);
     await page.waitForTimeout(800);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-play.png` });
-    await expect(page.getByRole("button", { name: "Remove the platform" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Stop riding" })).toBeVisible();
 
     await page.getByRole("button", { name: /Lava rises every 5 seconds/ }).click();
     await expect(page.getByText("Lava rises every 5 seconds").first()).toBeVisible();

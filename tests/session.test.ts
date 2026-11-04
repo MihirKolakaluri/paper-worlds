@@ -9,7 +9,7 @@ const LW = 640, LH = 320, S = 40;
 const box = (x: number, y: number) => ({ x1: x - S / 2, y1: y - S / 2, x2: x + S / 2, y2: y + S / 2 });
 const scene = (x: number, y: number) => rect(frame(320, 240, WHITE), x, y, S, S, GREEN);
 function make() {
-  const hooks = { addMover: vi.fn<(m: Mover) => void>(), removeMover: vi.fn<(id: string) => void>(), setMoverTarget: vi.fn<(id: string, x: number, y: number) => void>(), setMoverAlpha: vi.fn<(id: string, a: number) => void>() };
+  const hooks = { addMover: vi.fn<(m: Mover) => void>(), removeMover: vi.fn<(id: string) => void>(), setMoverTarget: vi.fn<(id: string, x: number, y: number) => void>(), setMoverAlpha: vi.fn<(id: string, a: number) => void>(), setRide: vi.fn<(id: string | null) => void>() };
   const s = new MoverSession(hooks, LW, LH, 8);
   const c = calibrate([[0, 0], [320, 0], [320, 240], [0, 240]], LW, LH);
   if (!c.ok) throw new Error(c.error);
@@ -117,6 +117,13 @@ describe("MoverSession", () => {
     const anchors = s.anchors();
     expect(anchors.filter(a => a.lost).length).toBe(1);
     expect(s.applyBoxes([box(240, 120)], { frame: onlyBlue(), anchors }, 1300).found).toBe(0);
+  });
+  it("the first note becomes the controller, and removing it hands control back to the keys", () => {
+    const { s, hooks } = make();
+    s.addNotes([box(160, 120)], scene(160, 120));
+    expect(hooks.setRide.mock.lastCall![0]).toMatch(/^note-/);
+    s.removeLast();
+    expect(hooks.setRide.mock.lastCall![0]).toBeNull();
   });
   it("a wrong SAM box on the desk can't teach the tracker that the desk is the note", () => {
     const WOOD: [number, number, number] = [176, 128, 84];

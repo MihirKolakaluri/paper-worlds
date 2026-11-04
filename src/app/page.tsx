@@ -5,10 +5,10 @@ import s from "./landing.module.css";
 const STEPS = [
   ["Draw", "Platforms, lava, a stick figure and a flag."],
   ["Snap", "Your drawing becomes a real game."],
-  ["Play", "Your own hand is in the game too."],
+  ["Play", "Your own hand is the controller."],
 ];
 const POWERS = [
-  ["Move the world", "Slide a sticky note and it becomes a bridge."],
+  ["Steer with your hand", "Slide a sticky note and you ride it through your level. Dodge what flies at you."],
   ["Change the rules", "Say or type \"make the lava rise\" and it does."],
 ];
 const MODELS = [

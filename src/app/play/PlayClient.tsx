@@ -20,6 +20,8 @@ export default function PlayClient() {
   const [won, setWon] = useState(false);
   const [deaths, setDeaths] = useState(0);
   const [hideWarn, setHideWarn] = useState(false);
+  const [riding, setRiding] = useState(false);
+  const [dodged, setDodged] = useState(0);
   const [sample, setSample] = useState<string | null>(null);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -37,7 +39,7 @@ export default function PlayClient() {
 
   const onReady = useCallback((h: Hooks) => {
     setHooks(h);
-    h.onEvent(e => { if (e.type === "win") setWon(true); if (e.type === "start") setWon(false); if (e.type === "die") setDeaths(d => d + 1); });
+    h.onEvent(e => { if (e.type === "win") setWon(true); if (e.type === "start") { setWon(false); setDodged(0); } if (e.type === "ride") { setRiding(e.on); setDodged(0); } if (e.type === "dodge") setDodged(n => n + 1); if (e.type === "die") setDeaths(d => d + 1); });
   }, []);
 
   if (level === null) return <main className={s.center}>Loading…</main>;
@@ -58,6 +60,7 @@ export default function PlayClient() {
     <main className={s.wrap}>
       <header className={s.top}>
         <Link href={sample ? "/" : "/make"} className={s.back}>{sample ? "← Home" : "← New drawing"}</Link>
+        {riding && <span className={`${s.stat} ${s.dodged}`}>Dodged: {dodged}</span>}
         <span className={s.stat} aria-live="polite">Falls: {deaths}</span>
         <button className={s.small} onClick={() => hooks?.restart()}>Restart (R)</button>
       </header>
@@ -78,9 +81,9 @@ export default function PlayClient() {
       )}
       {!sample && <MoverSlot hooks={hooks} level={level} />}
       <div className={s.keys}>
-        <span><kbd>←</kbd><kbd>→</kbd> Move</span>
+        {riding ? <span>Steer with your hand</span> : <span><kbd>←</kbd><kbd>→</kbd> Move</span>}
         <span><kbd>Space</kbd> Jump</span>
-        <span>Reach the flag</span>
+        <span>{riding ? "Dodge the scribbles" : "Reach the flag"}</span>
       </div>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (

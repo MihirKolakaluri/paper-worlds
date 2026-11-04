@@ -2,6 +2,7 @@
 .top { display: flex; align-items: center; gap: 10px; }
 .back, .small, .stat { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px #0002, 0 2px 8px #0001; font-weight: 600; font-size: 15px; }
 .back { text-decoration: none; }
+.dodged + .stat { margin-left: 0; }
 .stat { margin-left: auto; font-family: var(--font-hand), system-ui; font-size: 20px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .small { border: 0; cursor: pointer; font-family: inherit; }
 .back:hover, .small:hover { background: #fff; }

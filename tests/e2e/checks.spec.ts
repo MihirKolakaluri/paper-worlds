@@ -64,33 +64,35 @@ test.describe("desktop", () => {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/win-${id}.png` });
   });
 
-  test("the platform carries the player, and Space never toggles it off", async ({ page }) => {
+  test("your hand steers the hero with no keys, Space never stops the ride and scribbles arrive", async ({ page }) => {
     test.setTimeout(60_000);
     await open(page, "/play?demo=a");
-    await page.getByRole("button", { name: "Add a moving platform" }).click();
+    await page.getByRole("button", { name: "Ride a plank" }).click();
     await page.keyboard.press("Space");
-    await page.waitForTimeout(1300);
-    await expect(page.getByRole("button", { name: "Remove the platform" })).toBeVisible();
+    await page.waitForTimeout(900);
+    await expect(page.getByRole("button", { name: "Stop riding" })).toBeVisible();
     const box = (await page.locator("canvas").boundingBox())!, lvl = await (await page.request.get(`${BASE}/samples/a.json`)).json();
-    const k = box.width / (lvl.width * 8);
-    const sx = (x: number) => box.x + x * k, sy = (y: number) => box.y + y * k;
-    const px = 500, py = 594; // open air past the drawn platform, top about 46 px above the ground
-    await page.mouse.move(sx(px), sy(py));
-    await page.waitForTimeout(700);
-    await page.keyboard.down("ArrowRight");
-    await page.waitForFunction(() => (window as unknown as { __pw: S }).__pw.x >= 400, null, { timeout: 8000 });
-    await page.keyboard.down("Space");
-    await page.waitForFunction(x => (window as unknown as { __pw: S }).__pw.x >= x, px - 10, { timeout: 5000 });
-    await page.keyboard.up("ArrowRight"); await page.keyboard.up("Space");
-    await page.waitForTimeout(1500);
-    const on = await state(page);
-    console.log("ON", JSON.stringify({ x: Math.round(on.x), y: Math.round(on.y), deaths: (on as S).deaths }));
-    expect(Math.abs(on.y - (py - 8 - 22))).toBeLessThan(12); // standing on the platform, not the ground
-    for (let i = 1; i <= 40; i++) { await page.mouse.move(sx(px - i * 5), sy(py)); await page.waitForTimeout(40); }
-    await page.waitForTimeout(400);
-    const s1 = await state(page);
-    console.log("RIDE", JSON.stringify({ on: Math.round(on.x), to: Math.round(s1.x), y: Math.round(s1.y) }));
-    expect(on.x - s1.x).toBeGreaterThan(120);
+    const k = box.width / (lvl.width * 8), sx = (x: number) => box.x + x * k, sy = (y: number) => box.y + y * k;
+    await page.mouse.move(sx(300), sy(200));
+    await page.waitForTimeout(2500); // headless Chrome runs Phaser at about half speed
+    const a = await state(page);
+    await page.mouse.move(sx(900), sy(200), { steps: 20 });
+    await page.waitForTimeout(2500);
+    const b = await state(page);
+    console.log("STEER", JSON.stringify({ from: Math.round(a.x), to: Math.round(b.x), y: Math.round(b.y), riding: (b as S & { riding: boolean }).riding }));
+    expect(Math.abs(a.x - 300)).toBeLessThan(40);
+    expect(Math.abs(b.x - 900)).toBeLessThan(40);
+    expect(Math.abs(b.y - 170)).toBeLessThan(30); // standing on the plank, not flung off the top
+    await page.keyboard.press("Space");
+    await page.waitForTimeout(250);
+    expect((await state(page)).y).toBeLessThan(b.y - 10); // Space still jumps off it
+    await page.waitForTimeout(2500);
+    expect(Math.abs((await state(page)).y - 170)).toBeLessThan(30); // and you land back on it
+    await page.waitForTimeout(9000); // long enough for scribbles to cross or hit
+    const dodged = Number((await page.getByText(/^Dodged:/).innerText()).replace(/\D/g, "")), falls = Number((await page.getByText(/^Falls:/).innerText()).replace(/\D/g, ""));
+    console.log("SCRIBBLES", JSON.stringify({ dodged, falls }));
+    expect(dodged + falls).toBeGreaterThan(0);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/ride.png` });
   });
 
   test("undoing a flip preset really puts gravity back", async ({ page }) => {
@@ -129,7 +131,7 @@ test.describe("phone", () => {
   test("a finger steers the platform and doesn't scroll the page", async ({ page }) => {
     test.setTimeout(40_000);
     await open(page, "/play?demo=a");
-    await page.getByRole("button", { name: "Add a moving platform" }).tap();
+    await page.getByRole("button", { name: "Ride a plank" }).tap();
     await page.waitForTimeout(400);
     const box = (await page.locator("canvas").boundingBox())!;
     const before = await page.locator("canvas").screenshot();

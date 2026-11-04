@@ -5,6 +5,7 @@ import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 import type { GameEvent, GameState, Hooks, HudEvent } from "./hooks";
 import { respawnLavaCap } from "./reach";
+import { rideVelocity, scribbleWave, scribbleY } from "./ride";
 import { clampRaise, clampSpeed, rearm, rulesFor, spawnSpot, type Active } from "./rules";
 import { buildArt, PAPER } from "./art";
 import { BUFFER_MS, COYOTE_MS, GRAVITY, physicsFor } from "./physics";
@@ -28,6 +29,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     setMoverTarget: (id, x, y) => withScene(s => s.setMoverTarget(id, x, y)),
     setMoverAlpha: (id, a) => withScene(s => s.movers.get(id)?.body.setAlpha(a)),
     addMover: m => withScene(s => s.addMover(m)),
+    setRide: id => withScene(s => s.setRide(id)),
     removeMover: id => withScene(s => s.removeMover(id)),
     applyRule: r => withScene(s => s.applyRule(r)),
     removeRule: id => withScene(s => s.removeRule(id)),
@@ -52,7 +54,13 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     won = false;
     dead = false;
     rules: Active[] = [];
-    movers = new Map<string, { body: Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body }; tx: number; ty: number }>();
+    movers = new Map<string, { body: Phaser.Physics.Arcade.Sprite & { body: Phaser.Physics.Arcade.Body }; tx: number; ty: number }>();
+    rider: string | null = null;
+    scribbles!: Phaser.Physics.Arcade.Group;
+    rideStart = 0;
+    nextScribbleAt = 0;
+    scribbleCount = 0;
+    airborne = false; // jumped off the plank on purpose
     moverGroup!: Phaser.Physics.Arcade.Group;
     extraTiles: [number, number][] = [];
     hero!: Phaser.GameObjects.Image;
@@ -119,6 +127,12 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.physics.add.collider(this.player, this.layer);
       this.moverGroup = this.physics.add.group({ allowGravity: false, immovable: true });
       this.physics.add.collider(this.player, this.moverGroup);
+      const sg = this.make.graphics({ x: 0, y: 0 }, false);
+      sg.lineStyle(3, 0x1f2433);
+      sg.beginPath(); for (let i = 0; i <= 60; i++) { const a = i * 0.42, r = 3 + i * 0.19 + (i % 3) * 0.8; if (i) sg.lineTo(16 + Math.cos(a) * r, 16 + Math.sin(a) * r); else sg.moveTo(16, 16); } sg.strokePath();
+      sg.generateTexture("scribble", 32, 32); sg.destroy();
+      this.scribbles = this.physics.add.group({ allowGravity: false });
+      this.physics.add.overlap(this.player, this.scribbles, () => this.die());
 
       this.lavaGfx = this.add.graphics().setDepth(4);
       this.extraGfx = this.add.graphics().setDepth(3);
@@ -190,7 +204,9 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
     spawn() {
       if (this.flipped) this.flip(); // a fresh start, or flipped gravity throws you off the top again and again
-      this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
+      const plank = this.plank();
+      this.airborne = false;
+      this.player.setPosition(plank ? plank.body.center.x : level.spawn.x * T, plank ? plank.body.top - PH / 2 - 1 : level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
       // risen lava drops back below the start, or you would respawn into it and die forever
       this.lavaRise = Math.min(this.lavaRise, lavaCap);
       this.dead = false; this.cut = false; this.jumpPressedAt = -1e9;
@@ -200,6 +216,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     die() {
       if (this.dead || this.won) return;
       this.dead = true; this.deaths++;
+      this.scribbles.clear(true, true); this.rideStart = this.time.now; this.nextScribbleAt = this.time.now + 1500;
       this.cameras.main.shake(140, 0.008); this.cameras.main.flash(160, 255, 90, 70);
       this.hero.setTint(0xff3b3b);
       fire({ type: "die" });
@@ -211,6 +228,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       if (this.won || this.dead) return;
       this.runRules(r => r.trigger.type === "touch" && r.trigger.target === "goal");
       this.won = true;
+      this.scribbles.clear(true, true);
       this.player.setVelocity(0, 0); this.player.body.setAllowGravity(false);
       this.confetti.explode(70, this.player.x, this.player.y - PH);
       this.tweens.add({ targets: this.hero, y: this.hero.y - 18, duration: 220, yoyo: true, repeat: 2, ease: "Sine.out" });
@@ -295,10 +313,25 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     addMover(m: Mover) {
       this.removeMover(m.id);
       const w = Math.max(2, m.shape[0]?.length ?? 4) * T, h = Math.max(1, m.shape.length) * T;
-      const rect = this.add.rectangle(m.pos.x, m.pos.y, w, h, /^#[0-9a-f]{6}$/i.test(m.color) ? parseInt(m.color.slice(1), 16) : 0x22c55e, 0.85) as Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
-      this.moverGroup.add(rect);
+      const key = `plank-${w}-${h}`;
+      if (!this.textures.exists(key)) { // a pen stroke, so it belongs in the drawing
+        const g = this.make.graphics({ x: 0, y: 0 }, false);
+        g.lineStyle(5, 0x1d4ed8); g.beginPath(); g.moveTo(3, 5);
+        for (let x = 6; x <= w - 3; x += 6) g.lineTo(x, 5 + Math.sin(x * 0.21) * 1.4);
+        g.strokePath(); g.generateTexture(key, w, h); g.destroy();
+      }
+      const rect = this.moverGroup.create(m.pos.x, m.pos.y, key).setDepth(4) as Phaser.Physics.Arcade.Sprite & { body: Phaser.Physics.Arcade.Body };
       rect.body.setAllowGravity(false).setImmovable(true).setFriction(1, 0); // a physics group defaults friction to 0, which would slide platforms out from under the player
+      rect.body.checkCollision.down = rect.body.checkCollision.left = rect.body.checkCollision.right = false; // land on it from above, like a drawn line
       this.movers.set(m.id, { body: rect, tx: m.pos.x, ty: m.pos.y });
+    }
+    plank() { return this.rider ? this.movers.get(this.rider)?.body ?? null : null; }
+    setRide(id: string | null) {
+      this.rider = id;
+      this.scribbles.clear(true, true);
+      this.rideStart = this.time.now; this.nextScribbleAt = this.time.now + 1500; this.scribbleCount = 0;
+      fire({ type: "ride", on: !!id });
+      if (id && !this.won) this.spawn();
     }
     removeMover(id: string) { const m = this.movers.get(id); if (m) { m.body.destroy(); this.movers.delete(id); } }
     setMoverTarget(id: string, x: number, y: number) { const m = this.movers.get(id); if (m) { m.tx = x; m.ty = y; } }
@@ -322,9 +355,19 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       if (!this.won && !this.dead) {
         const left = kb.LEFT.isDown || kb.A.isDown || inp.left, right = kb.RIGHT.isDown || kb.D.isDown || inp.right;
         const jump = kb.UP.isDown || kb.W.isDown || kb.SPACE.isDown || inp.jump;
-        const vx = (right ? 1 : 0) - (left ? 1 : 0);
-        p.setVelocityX(vx * RUN * this.speedMul);
+        const plank = this.plank();
+        const vx = plank ? 0 : (right ? 1 : 0) - (left ? 1 : 0);
+        if (plank) { const rv = rideVelocity(plank.body.center.x, p.x); p.setVelocityX(rv); if (Math.abs(rv) > 30) p.setFlipX(rv < 0); }
+        else p.setVelocityX(vx * RUN * this.speedMul);
         if (vx) p.setFlipX(vx < 0);
+        if (plank && time >= this.nextScribbleAt) {
+          const wave = scribbleWave(time - this.rideStart);
+          const s = this.scribbles.create(W + 20, scribbleY(++this.scribbleCount, Math.random(), p.y, H), "scribble") as Phaser.Physics.Arcade.Sprite;
+          s.setDepth(6).setVelocityX(-wave.speed).setAngularVelocity(240);
+          (s.body as Phaser.Physics.Arcade.Body).setCircle(12, 4, 4);
+          this.nextScribbleAt = time + wave.gapMs;
+        }
+        for (const s of this.scribbles.getChildren() as Phaser.Physics.Arcade.Sprite[]) if (s.x < -30) { s.destroy(); fire({ type: "dodge" }); }
         const grounded = this.flipped ? b.blocked.up || b.touching.up : b.blocked.down || b.touching.down;
         if (grounded) this.lastGrounded = time;
         if (jump && !this.jumpHeld) this.jumpPressedAt = time;
@@ -332,10 +375,15 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         const up = this.flipped ? 1 : -1;
         // coyote time + jump buffer: forgiving jumps right at ledge edges
         if (time - this.jumpPressedAt < BUFFER_MS && time - this.lastGrounded < COYOTE_MS) {
-          p.setVelocityY(up * JUMP); this.jumpPressedAt = -1e9; this.lastGrounded = -1e9; this.cut = false; this.squash = -0.25;
+          this.airborne = true; p.setVelocityY(up * JUMP); this.jumpPressedAt = -1e9; this.lastGrounded = -1e9; this.cut = false; this.squash = -0.25;
         }
         // let go of jump early for a short hop
         if (!jump && !this.cut && b.velocity.y * up > JUMP * 0.45) { p.setVelocityY(up * JUMP * 0.45); this.cut = true; }
+        // held on the plank unless you jump, or it would fling the hero when it stops rising
+        if (plank && !this.flipped) {
+          if (this.airborne && b.velocity.y >= 0 && b.bottom >= plank.body.top - 2) this.airborne = false;
+          if (!this.airborne) { p.setY(plank.body.top - PH / 2); p.setVelocityY(0); this.lastGrounded = time; }
+        }
         if (grounded && !this.wasGrounded) { this.squash = 0.3; this.dust.explode(8, p.x, this.flipped ? b.top : b.bottom); }
         this.wasGrounded = grounded;
         // step up over 1-tile bumps from slanted lines
@@ -363,7 +411,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       this.lavaGfx.clear();
       if (this.lavaRise > 0) { const top = H - this.lavaRise, wave = (x: number) => top + Math.sin(x * 0.05 + time * 0.004) * 3; this.lavaGfx.fillStyle(0xff7a1a, 0.35).fillRect(0, top - 6, W, 6).fillStyle(0xe5383b, 0.92).beginPath().moveTo(0, H); for (let x = 0; x <= W; x += 8) this.lavaGfx.lineTo(x, wave(x)); this.lavaGfx.lineTo(W, H).closePath().fillPath(); }
       this.drawHero(time);
-      const s: GameState = { x: p.x, y: p.y, vx: b.velocity.x, vy: b.velocity.y, onFloor: b.blocked.down, deaths: this.deaths, won: this.won, lavaTop: H - this.lavaRise, gravityFlipped: this.flipped };
+      const s: GameState = { x: p.x, y: p.y, vx: b.velocity.x, vy: b.velocity.y, onFloor: b.blocked.down, deaths: this.deaths, won: this.won, lavaTop: H - this.lavaRise, gravityFlipped: this.flipped, riding: !!this.plank() };
       tickCbs.forEach(cb => cb(s));
     }
   }
