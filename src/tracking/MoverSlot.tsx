@@ -148,7 +148,6 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     </div>
   );
 
-  const notes = stats?.notes ?? 0;
   const lost = stats?.lost ?? 0;
   return (
     <div className={s.bar} onClick={release}>
