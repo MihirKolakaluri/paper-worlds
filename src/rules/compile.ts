@@ -118,7 +118,8 @@ export function wonderRequest(model: string, sentence: string, note?: string) {
     input: [{ type: "message" as const, role: "user" as const, content: [{ type: "input_text" as const, text: note ? `${sentence}\n\n(${note})` : sentence }] }],
     text: { format: { type: "json_schema" as const, name: "rule", schema: WIRE_SCHEMA, strict: true } },
     reasoning: { effort: "minimal" as const },
-    max_output_tokens: 4000,
+    // good answers use up to about 500 tokens. Wonder sometimes runs away printing blank space, and a low cap ends that in seconds
+    max_output_tokens: 1000,
   };
 }
 

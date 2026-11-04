@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Rule } from "@/schema/rule";
-import { compileSentence, FALLBACK_ERROR, IMMEDIATE_SEC, MIN_EVERY_SEC, parseWire, wireToRule, type Wire } from "@/rules/compile";
+import { compileSentence, FALLBACK_ERROR, IMMEDIATE_SEC, MIN_EVERY_SEC, parseWire, wireToRule, wonderRequest, type Wire } from "@/rules/compile";
 
 const wire = (over: Partial<Wire> = {}): Wire => ({
   ok: true, text: "Lava rises on whistle", mode: "every",
@@ -107,5 +107,11 @@ describe("compileSentence", () => {
   it("ok=false with a blank error falls back to the plain error", async () => {
     const ask = async () => JSON.stringify(wire({ ok: false, error: "" }));
     expect(await compileSentence("x", ask, "a")).toMatchObject({ error: FALLBACK_ERROR });
+  });
+});
+
+describe("wonderRequest", () => {
+  it("caps output low, so a runaway answer of blank space fails in seconds and the re-ask comes quickly", () => {
+    expect(wonderRequest("m", "double speed").max_output_tokens).toBeLessThanOrEqual(1000);
   });
 });
