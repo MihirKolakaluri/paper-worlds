@@ -107,20 +107,31 @@ describe("MoverSession", () => {
     expect(hooks.setMoverTarget.mock.lastCall![1]).toBeCloseTo(400, -1);
     expect(s.step(f.data, 320, 240, 1366).lostMs).toBe(0);
   });
+  it("found counts only rescued notes, so a note still on the table can't hide one that stays gone", () => {
+    const { s } = make();
+    const two = () => rect(scene(100, 120), 240, 120, S, S, BLUE);
+    s.addNotes([box(100, 120), box(240, 120)], two());
+    s.step(two().data, 320, 240, 0);
+    const onlyBlue = () => rect(frame(320, 240, WHITE), 240, 120, S, S, BLUE); // green was taken off the table
+    s.step(onlyBlue().data, 320, 240, 1200);
+    const anchors = s.anchors();
+    expect(anchors.filter(a => a.lost).length).toBe(1);
+    expect(s.applyBoxes([box(240, 120)], { frame: onlyBlue(), anchors }, 1300).found).toBe(0);
+  });
   it("a re-anchor that agrees with the tracker changes nothing, even if the note moved during the call", () => {
     const { s } = make();
     s.addNotes([box(100, 120)], scene(100, 120));
     s.step(scene(100, 120).data, 320, 240, 0);
     const anchors = s.anchors(), f = scene(100, 120);
     s.step(scene(180, 120).data, 320, 240, 1000); // SAM took a second and the note kept moving
-    expect(s.applyBoxes([box(100, 120)], { frame: f, anchors }, 1033)).toEqual({ changed: false, found: 1 });
+    expect(s.applyBoxes([box(100, 120)], { frame: f, anchors }, 1033)).toEqual({ changed: false, found: 0 });
   });
   it("a re-anchor pulls a drifted tracker back by the error it had when the frame was taken", () => {
     const { s } = make();
     s.addNotes([box(100, 120)], scene(100, 120));
     s.step(scene(100, 120).data, 320, 240, 0);
     const anchors = s.anchors(), f = scene(160, 120); // SAM saw the note 60 px from where the tracker thought
-    expect(s.applyBoxes([box(160, 120)], { frame: f, anchors }, 100)).toEqual({ changed: true, found: 1 });
+    expect(s.applyBoxes([box(160, 120)], { frame: f, anchors }, 100)).toEqual({ changed: true, found: 0 });
   });
 });
 

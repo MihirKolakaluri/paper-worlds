@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Hooks, HudEvent } from "@/game/hooks";
-import { clampSpeed, rulesFor, spawnSpot, type Active } from "@/game/rules";
+import { clampSpeed, rearm, rulesFor, spawnSpot, type Active } from "@/game/rules";
 import { createEngine, MAX_RULES } from "@/rules/engine";
 import { IMMEDIATE_SEC } from "@/rules/compile";
 import type { Rule } from "@/schema/rule";
@@ -135,5 +135,20 @@ describe("spawnSpot", () => {
     const s = spawnSpot({ ...base, x: 0, feetY: 9999 }, T, width, height, w);
     expect(s.x).toBe(0); expect(s.y).toBe(39);
     expect(spawnSpot({ ...base, x: 9999 }, T, width, height, w).x).toBe(70);
+  });
+});
+
+describe("rearm after a level reset", () => {
+  const rule = (id: string, mode: "once" | "every"): Rule => ({ id, text: id, mode, trigger: { type: "timer", sec: 10 }, action: { type: "reset" } });
+  it("a once rule that caused the reset stays used, or it would restart the level for ever", () => {
+    const cause: Active = { rule: rule("a", "once"), fired: 1, nextAt: 0 };
+    rearm([cause], 5000, () => 10_000, cause);
+    expect(cause.fired).toBe(1);
+  });
+  it("every other rule starts again", () => {
+    const other: Active = { rule: rule("b", "once"), fired: 1, nextAt: 0 }, every: Active = { rule: rule("c", "every"), fired: 3, nextAt: 0 };
+    rearm([other, every], 5000, () => 10_000, every);
+    expect(other).toMatchObject({ fired: 0, nextAt: 15_000 });
+    expect(every).toMatchObject({ fired: 0, nextAt: 15_000 });
   });
 });

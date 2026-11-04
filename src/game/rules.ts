@@ -7,6 +7,15 @@ export const clampSpeed = (x: number) => Math.max(0.5, Math.min(2.5, x));
 /** `raised` and `tiles` remember what this rule did, so × can take it back. */
 export type Active = { rule: Rule; fired: number; nextAt: number; raised?: number; tiles?: [number, number][] };
 
+/** After a level reset every rule starts again, except a once rule that caused the reset, which would loop for ever. */
+export function rearm(active: Active[], now: number, timerMs: (r: Rule) => number, cause?: Active) {
+  for (const a of active) {
+    a.raised = 0; a.tiles = [];
+    if (a === cause && a.rule.mode === "once") continue;
+    a.fired = 0; a.nextAt = now + timerMs(a.rule);
+  }
+}
+
 /** Which rules fire for this trigger. `once` rules fire a single time. */
 export function rulesFor(active: Active[], match: (r: Rule) => boolean): Active[] {
   return active.filter(a => match(a.rule) && (a.rule.mode === "every" || a.fired === 0));

@@ -36,6 +36,7 @@ export default function VoiceControls({ engine, onText, onError, onMicChange }: 
   const live = useRef<{ mic: Mic; detector: SoundDetector; take: Take | null; state: State } | null>(null);
   const keys = useRef(new Set<string>());
 
+  const gone = useRef(false);
   const setState = useCallback((next: State) => { if (live.current) live.current.state = next; setStateRaw(next); }, []);
 
   const turnOff = useCallback(() => {
@@ -58,6 +59,7 @@ export default function VoiceControls({ engine, onText, onError, onMicChange }: 
         if (v.take?.push(frame)) stopRef.current();
         v.detector.push(frame);
       });
+      if (gone.current) { mic.close(); return; } // left the page during the permission prompt
       const detector = new SoundDetector(mic.rate, sound => { engine.fire(sound); setNote(WORDS[sound]); });
       live.current = { mic, detector, take: null, state: "opening" };
       onMicChange(true);
@@ -114,7 +116,10 @@ export default function VoiceControls({ engine, onText, onError, onMicChange }: 
     return () => { window.removeEventListener("keydown", down, true); window.removeEventListener("keyup", up, true); window.removeEventListener("blur", left); };
   }, [startTalk, stopTalk]);
 
-  useEffect(() => () => { live.current?.mic.close(); live.current = null; onMicChange(false); }, [engine, onMicChange]);
+  useEffect(() => {
+    gone.current = false;
+    return () => { gone.current = true; live.current?.mic.close(); live.current = null; onMicChange(false); };
+  }, [engine, onMicChange]);
 
   if (state === "off" || state === "opening") {
     return <div className={s.voice}><button className={s.mic} disabled={state === "opening"} onClick={turnOn}>{state === "opening" ? "Starting mic…" : "Turn on mic"}</button></div>;

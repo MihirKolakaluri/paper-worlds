@@ -26,7 +26,7 @@ export default function DemoMover({ hooks, level, stage }: { hooks: Hooks | null
 
   return (
     <div className={s.bar}>
-      <button className={s.toggle} aria-pressed={on} onClick={() => setOn(v => !v)}>{on ? "Remove the platform" : "Add a moving platform"}</button>
+      <button className={s.toggle} aria-pressed={on} onClick={e => { setOn(v => !v); if (e.detail > 0) e.currentTarget.blur(); }}>{on ? "Remove the platform" : "Add a moving platform"}</button>
       <span className={s.hint}>{on ? "Steer it with your mouse or finger over the game. This is what a sticky note does under the camera." : "A real sticky note does this under a camera. Here your mouse or finger stands in for it."}</span>
     </div>
   );

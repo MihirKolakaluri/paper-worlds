@@ -4,7 +4,8 @@ import type { Level } from "@/schema/level";
 import type { Mover } from "@/schema/mover";
 import type { Rule } from "@/schema/rule";
 import type { GameEvent, GameState, Hooks, HudEvent } from "./hooks";
-import { clampRaise, clampSpeed, rulesFor, spawnSpot, type Active } from "./rules";
+import { respawnLavaCap } from "./reach";
+import { clampRaise, clampSpeed, rearm, rulesFor, spawnSpot, type Active } from "./rules";
 import { buildArt, PAPER } from "./art";
 import { BUFFER_MS, COYOTE_MS, GRAVITY, physicsFor } from "./physics";
 
@@ -15,6 +16,7 @@ type Arcade = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game: Phaser.Game; hooks: Hooks } {
   const T = level.tileSize, W = level.width * T, H = level.height * T;
   const { PH, PW, JUMP, RUN, jumpH } = physicsFor(level.spawn.h, T, level.jumpH);
+  const lavaCap = respawnLavaCap(level);
   const tickCbs = new Set<(s: GameState) => void>(), eventCbs = new Set<(e: HudEvent) => void>();
   const fire = (e: HudEvent) => eventCbs.forEach(cb => cb(e));
   let scene: PlayScene | null = null;
@@ -189,7 +191,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     spawn() {
       this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
       // risen lava drops back below the start, or you would respawn into it and die forever
-      this.lavaRise = Math.min(this.lavaRise, Math.max(0, H - level.spawn.y * T - PH - 2 * T));
+      this.lavaRise = Math.min(this.lavaRise, lavaCap);
       this.dead = false; this.cut = false; this.jumpPressedAt = -1e9;
       if (this.hero && !this.intro) { this.hero.clearTint().setAlpha(1).setScale(0); this.tweens.add({ targets: this.hero, scale: this.heroScale, duration: 260, ease: "Back.out" }); }
     }
@@ -215,11 +217,11 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       fire({ type: "win" });
     }
 
-    resetLevel() {
+    resetLevel(cause?: Active) {
       this.won = false; this.lavaRise = 0; this.speedMul = 1; this.frozenUntil = 0;
       if (this.flipped) { this.flipped = false; this.physics.world.gravity.y = GRAVITY; this.setOneWay(); }
       this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = []; this.drawExtra();
-      this.rules.forEach(a => { a.fired = 0; a.raised = 0; a.tiles = []; a.nextAt = this.time.now + this.timerMs(a.rule); });
+      rearm(this.rules, this.time.now, r => this.timerMs(r), cause);
       this.player.body.setAllowGravity(true);
       this.spawn();
       fire({ type: "start" });
@@ -254,7 +256,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     }
     flip() {
       this.flipped = !this.flipped; this.physics.world.gravity.y = this.flipped ? -GRAVITY : GRAVITY;
-      this.player.setFlipY(this.flipped); this.setOneWay();
+      this.player.setFlipY(this.flipped); this.setOneWay(); this.drawExtra();
     }
     /** The tile layer is invisible (the drawing is the art), so platforms from rules need their own ink. */
     drawExtra() {
@@ -268,7 +270,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
           const next = Math.min(H * 0.6, this.lavaRise + clampRaise(a.px));
           active.raised = (active.raised ?? 0) + next - this.lavaRise; this.lavaRise = next; break;
         }
-        case "flip_gravity": this.flip(); this.drawExtra(); break;
+        case "flip_gravity": this.flip(); break;
         case "spawn_platform": {
           const b = this.player.body, w = Math.max(2, Math.round(a.w));
           const near = a.x < 0 || a.y < 0;
@@ -285,7 +287,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         }
         case "speed": this.speedMul = clampSpeed(a.x); break;
         case "freeze_movers": this.frozenUntil = this.time.now + Math.min(30, a.sec) * 1000; break;
-        case "reset": this.time.delayedCall(0, () => this.resetLevel()); break;
+        case "reset": this.time.delayedCall(0, () => this.resetLevel(active)); break;
       }
     }
 

@@ -86,7 +86,7 @@ export class MoverSession {
   /** SAM's boxes for a captured frame, in that frame's pixels. */
   applyBoxes(boxes: Box[], cap: { frame: Img; anchors: Anchor[] }, now: number): Applied {
     const matches = reconcile(boxes, cap.anchors, cap.frame);
-    let changed = false;
+    let changed = false, found = 0;
     for (const m of matches) {
       const was = cap.anchors.find(a => a.id === m.id)!, cur = this.tracker.get(m.id);
       if (!cur) continue; // removed while SAM was thinking
@@ -97,13 +97,14 @@ export class MoverSession {
         if (sig.ok) this.tracker.setSignature(m.id, sig.hsv);
         this.tracker.reanchor(m.id, m.x, m.y, now);
         changed = true;
+        found++;
       } else if (Math.hypot(m.x - was.x, m.y - was.y) > DRIFT_PX && !was.lost) {
         // The tracker was off when the frame was taken, so correct by that error, not to the old spot.
         this.tracker.reanchor(m.id, cur.x + m.x - was.x, cur.y + m.y - was.y, now);
         changed = true;
       }
     }
-    return { changed, found: matches.length };
+    return { changed, found }; // found = lost notes rescued, which is what the lost back-off needs
   }
 
   removeLast() {

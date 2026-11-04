@@ -42,3 +42,16 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     expect(errors).toEqual([]);
   });
 }
+
+test("rising lava never traps a player in a respawn loop", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${BASE}/play?demo=a`);
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(2500);
+  await page.getByRole("button", { name: /Lava rises every 5 seconds/ }).click();
+  await page.waitForTimeout(30_000); // stand still: lava reaches the player, then keep watching
+  const falls = Number((await page.getByText(/^Falls:/).innerText()).replace(/\D/g, ""));
+  expect(falls).toBeGreaterThan(0);
+  expect(falls).toBeLessThanOrEqual(8); // a respawn loop would be about 40 in this time
+});

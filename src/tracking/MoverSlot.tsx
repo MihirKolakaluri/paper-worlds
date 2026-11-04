@@ -32,12 +32,14 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [corners, setCorners] = useState(0);
   const [finding, setFinding] = useState(false);
+  const [camLost, setCamLost] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const debug = useSyncExternalStore(noSubscribe, readDebug, noDebug);
 
   const stop = () => {
     rig.current?.close();
     rig.current = null;
+    setCamLost(false); setFinding(false);
     setPhase("off"); setHidden(false); setError(null); setWarnings([]); setCorners(0); setStats(null);
   };
 
@@ -48,28 +50,38 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     if (!hooks) return;
     setError(null); setWarnings([]); setPhase("opening");
     const r = new Rig(hooks, { w: level.width * level.tileSize, h: level.height * level.tileSize, tile: level.tileSize }, setStats,
-      () => setError("The camera stopped. Pick it again below."));
+      () => { setCamLost(true); setError("The camera stopped. Your notes and corners are still here."); });
     rig.current = r;
     try {
       const list = await listCameras();
+      if (rig.current !== r) return; // Stop camera was pressed while this was opening
       const id = chooseCamera(list, loadCameraId());
       setCams(list);
       setHint(iphoneHint(list, navigator.userAgent));
       if (!id) { r.close(); rig.current = null; setPhase("off"); setError("No camera found. Plug one in, or open Continuity Camera: iPhone near Mac, same Apple ID."); return; }
       setCamId(id);
       await r.open(id);
+      if (rig.current !== r) return;
       saveCameraId(id);
       setPhase("corners");
     } catch (e) {
+      if (rig.current !== r) return;
       r.close(); rig.current = null;
       setPhase("off"); setError(cameraError(e));
     }
   };
 
+  const reconnect = async () => {
+    const r = rig.current;
+    if (!r) return;
+    setError(null);
+    try { await r.open(camId); setCamLost(false); } catch (e) { setError(cameraError(e)); }
+  };
+
   const pick = async (id: string) => {
     const r = rig.current;
     if (!r) return;
-    setError(null); setCamId(id);
+    setError(null); setCamId(id); setCamLost(false);
     try {
       r.session.clear(); // positions from the old camera mean nothing on the new one
       r.corners = []; setCorners(0);
@@ -97,8 +109,8 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     if (!r || finding) return;
     setFinding(true); setError(null); setWarnings([]);
     const res = await r.findNotes();
-    if (rig.current !== r) return;
     setFinding(false);
+    if (rig.current !== r) return;
     setError(res.error ?? null);
     setWarnings(res.warnings);
     if (r.session.count) {
@@ -147,6 +159,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
               {cams.map(c => <option key={c.deviceId} value={c.deviceId}>{c.label}</option>)}
             </select>
           </label>
+          {camLost && <button className={s.btn} onClick={reconnect}>Reconnect camera</button>}
           {hint && <p className={s.hint}>{hint}</p>}
           <canvas className={phase === "corners" ? `${s.view} ${s.pickable}` : s.view} data-testid="mover-view" ref={el => { if (rig.current) rig.current.view = el; }} onClick={click} />
           {phase === "corners" && <>

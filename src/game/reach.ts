@@ -5,18 +5,32 @@ import { GRAVITY, physicsFor } from "./physics";
 
 export type Reach = { landed: boolean; reachable: boolean };
 
+const standable = ({ solid, lava }: Level, c: number, r: number) => r > 0 && solid[r][c] && !solid[r - 1][c] && !lava[r - 1][c];
+
+/** The tile the player lands on when the level starts, or null if they fall into lava or off the page. */
+function landing(level: Level): [number, number] | null {
+  const T = level.tileSize, { PW } = physicsFor(level.spawn.h, T, level.jumpH);
+  const cL = Math.max(0, Math.floor(level.spawn.x - PW / 2 / T)), cR = Math.min(level.width - 1, Math.floor(level.spawn.x + PW / 2 / T));
+  for (let r = Math.max(1, Math.ceil(level.spawn.y)); r < level.height; r++) for (let c = cL; c <= cR; c++) {
+    if (level.lava[r][c]) return null;
+    if (standable(level, c, r)) return [c, r];
+  }
+  return null;
+}
+
+/** The most risen lava (px from the bottom) that still leaves the landing spot safe after a fall. */
+export function respawnLavaCap(level: Level) {
+  const T = level.tileSize, spot = landing(level);
+  return spot ? Math.max(0, (level.height - spot[1] - 2) * T) : 0;
+}
+
 export function checkReach(level: Level): Reach {
-  const T = level.tileSize, { width: cols, height: rows, solid, lava } = level;
+  const T = level.tileSize, { width: cols, height: rows } = level;
   const { PH, PW, jumpH, JUMP, RUN } = physicsFor(level.spawn.h, T, level.jumpH);
-  const stand = (c: number, r: number) => r > 0 && solid[r][c] && !solid[r - 1][c] && !lava[r - 1][c];
+  const stand = (c: number, r: number) => standable(level, c, r);
 
   // 1. where does the player land when the level starts?
-  const cL = Math.max(0, Math.floor(level.spawn.x - PW / 2 / T)), cR = Math.min(cols - 1, Math.floor(level.spawn.x + PW / 2 / T));
-  let start: [number, number] | null = null;
-  outer: for (let r = Math.max(1, Math.ceil(level.spawn.y)); r < rows; r++) for (let c = cL; c <= cR; c++) {
-    if (lava[r][c]) break outer;
-    if (stand(c, r)) { start = [c, r]; break outer; }
-  }
+  const start = landing(level);
   if (!start) return { landed: false, reachable: false };
 
   // 2. every place you can stand

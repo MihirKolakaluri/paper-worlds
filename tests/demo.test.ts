@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { Level } from "@/schema/level";
 import { Rule } from "@/schema/rule";
-import { checkReach } from "@/game/reach";
+import { checkReach, respawnLavaCap } from "@/game/reach";
 import { SAMPLES, sampleById } from "@/demo/samples";
 import { PRESETS } from "@/demo/presets";
 import { demoMover, pointerToLevel } from "@/demo/mouse";
@@ -17,6 +17,14 @@ describe("Try it now samples", () => {
     const level = Level.parse(JSON.parse(readFileSync(`public/samples/${id}.json`, "utf8")));
     expect(level.image).toBe(`/samples/${id}.jpg`);
     expect(checkReach(level)).toEqual({ landed: true, reachable: true });
+  });
+  it.each(["a", "b"])("sample %s: risen lava always drops below where you land after a fall", id => {
+    const level = Level.parse(JSON.parse(readFileSync(`public/samples/${id}.json`, "utf8")));
+    const H = level.height * level.tileSize, deathLine = H - respawnLavaCap(level) + 2;
+    let r = Math.ceil(level.spawn.y); const c = Math.floor(level.spawn.x);
+    while (r < level.height && !level.solid[r][c]) r++;
+    expect(r).toBeLessThan(level.height);
+    expect(r * level.tileSize).toBeLessThan(deathLine);
   });
 });
 

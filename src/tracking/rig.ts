@@ -97,6 +97,7 @@ export class Rig {
         cap = await this.capture();
         r = await postFrame(cap.image, cap.w, cap.h, AbortSignal.timeout(20_000));
       }
+      if (this.closed) return { added: 0, warnings: [] }; // camera stopped while SAM was looking: nothing would manage a new platform
       if (!r.ok) return { added: 0, warnings: [], error: r.error ?? "The AI didn't answer. Wait a moment and try again." };
       if (!r.boxes.length) return { added: 0, warnings: [], error: "I don't see a sticky note. Put a bright blue or green one on the paper and try again." };
       const res = this.session.addNotes(this.toProc(r.boxes, cap), cap.frame);
