@@ -187,6 +187,8 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
 
     spawn() {
       this.player.setPosition(level.spawn.x * T, level.spawn.y * T + PH / 2).setVelocity(0, 0).setFlipY(this.flipped);
+      // risen lava drops back below the start, or you would respawn into it and die forever
+      this.lavaRise = Math.min(this.lavaRise, Math.max(0, H - level.spawn.y * T - PH - 2 * T));
       this.dead = false; this.cut = false; this.jumpPressedAt = -1e9;
       if (this.hero && !this.intro) { this.hero.clearTint().setAlpha(1).setScale(0); this.tweens.add({ targets: this.hero, scale: this.heroScale, duration: 260, ease: "Back.out" }); }
     }

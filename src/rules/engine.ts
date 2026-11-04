@@ -21,6 +21,8 @@ function clean(rule: Rule): Rule {
   return { ...rule, action, trigger };
 }
 
+let nextId = 1;
+
 export function createEngine(hooks: Hooks) {
   let live: Live[] = [];
   const listeners = new Set<() => void>();
@@ -28,6 +30,7 @@ export function createEngine(hooks: Hooks) {
   let stopEvents: (() => void) | null = null;
 
   return {
+    id: nextId++,
     add(input: Rule): AddResult {
       const parsed = Rule.safeParse(input);
       if (!parsed.success) return { ok: false, error: "That rule doesn't work." };

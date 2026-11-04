@@ -4,6 +4,8 @@ import type { Hooks } from "@/game/hooks";
 import type { Rule } from "@/schema/rule";
 import { MAX_SENTENCE } from "./compile";
 import { createEngine, FULL_ERROR, type Live } from "./engine";
+import { VOICE_ON } from "./voice/flag";
+import VoiceControls from "./voice/VoiceControls";
 import s from "./RuleSlot.module.css";
 
 export type RulePreset = { label: string; rule: Rule };
@@ -11,6 +13,7 @@ type Props = {
   hooks: Hooks | null;
   /** One click chips that apply the given Rule with no API call. */
   presets?: RulePreset[];
+  /** Hides the mic controls. Whistle and clap rules then fire from the on-screen buttons or keys 1 and 2. */
   demo?: boolean;
 };
 
@@ -41,6 +44,7 @@ export default function RuleSlot({ hooks, presets, demo = false }: Props) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [micOn, setMicOn] = useState(false);
   const box = useRef<HTMLInputElement>(null);
 
   const addRule = useCallback((rule: Rule) => {
@@ -87,7 +91,7 @@ export default function RuleSlot({ hooks, presets, demo = false }: Props) {
     if (await submit(text)) { setText(""); box.current?.blur(); }
   };
 
-  const soundKeys = engine?.needsSound();
+  const soundKeys = engine?.needsSound() && !micOn;
   const unused = presets?.filter(p => !rules.some(l => l.rule.id === p.rule.id)) ?? [];
 
   return (
@@ -122,7 +126,7 @@ export default function RuleSlot({ hooks, presets, demo = false }: Props) {
           )}
         </div>
       )}
-      {demo && null}
+      {VOICE_ON && !demo && engine && <VoiceControls key={engine.id} engine={engine} onText={submit} onError={setError} onMicChange={setMicOn} />}
     </section>
   );
 }

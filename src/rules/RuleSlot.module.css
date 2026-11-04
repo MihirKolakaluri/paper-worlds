@@ -20,3 +20,9 @@
 .sound { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px #0002; }
 .box:focus-visible, .add:focus-visible, .clear:focus-visible, .preset:focus-visible, .sound:focus-visible, .x:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+.voice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mic { height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px #0002; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mic:disabled, .clear:disabled { opacity: .5; cursor: default; }
+.talking { background: #e5383b; color: #fff; }
+.note { flex: 1; min-width: 0; font-size: 14px; color: var(--fg); opacity: .8; }
+.mic:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
