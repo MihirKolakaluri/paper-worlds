@@ -2,6 +2,8 @@
 
 Draw a game on paper. Play it a few seconds later.
 
+![A pen drawing played as a game, reaching the flag](docs/demo.gif)
+
 **Play it now: https://paper-worlds-flame.vercel.app**
 
 Press Try it now. You don't need paper or a camera or an account.
@@ -55,3 +57,4 @@ For the sticky notes use Safari if you want your iPhone as the camera, since Chr
 - The drawings in `public/samples` are mine.
 - Libraries: Next.js (MIT), React (MIT), Phaser (MIT), zod (MIT) and the OpenAI SDK (Apache 2.0), which talks to Meta's API.
 - Fonts: Geist and Patrick Hand from Google Fonts.
+- Sound effects in the demo video come from Pixabay under the Pixabay Content License: UI Success Chime and Sci-Fi UI Click Sound by SoundShelfStudio and Thin Swoosh by Universfield. The music was made in code for this video.
