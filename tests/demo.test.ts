@@ -18,6 +18,10 @@ describe("Try it now samples", () => {
     expect(level.image).toBe(`/samples/${id}.jpg`);
     expect(checkReach(level)).toEqual({ landed: true, reachable: true });
   });
+  it("sample b's top platform is a real jump, not a pixel-perfect graze of the flag", () => {
+    const level = Level.parse(JSON.parse(readFileSync("public/samples/b.json", "utf8")));
+    expect(level.jumpH).toBeGreaterThanOrEqual(304 - 96 + 24); // third platform to top platform, plus room
+  });
   it.each(["a", "b"])("sample %s: risen lava always drops below where you land after a fall", id => {
     const level = Level.parse(JSON.parse(readFileSync(`public/samples/${id}.json`, "utf8")));
     const H = level.height * level.tileSize, deathLine = H - respawnLavaCap(level) + 2;

@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // A stranger with no paper, camera or AI: land, try a sample, steer the platform, come back.
 const BASE = process.env.BASE_URL ?? "http://localhost:3111";
+test.use({ browserName: (process.env.PW_BROWSER ?? "chromium") as "chromium" | "webkit" });
 const SHOTS = process.env.SHOTS;
 
 for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]] as const) {
