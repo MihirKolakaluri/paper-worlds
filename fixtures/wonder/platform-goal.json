@@ -1,0 +1,4 @@
+{
+  "sentence": "add a platform when I touch the goal",
+  "output_text": "{\"action\":  {\"amount\": 0.0, \"type\": \"spawn_platform\"}, \"error\": \"\", \"mode\": \"once\", \"ok\": true, \"text\": \"Add platform when touching goal\", \"trigger\": {\"sec\": 0.0, \"target\": \"goal\", \"type\": \"touch\"}}"
+}

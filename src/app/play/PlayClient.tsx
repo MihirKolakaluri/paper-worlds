@@ -5,6 +5,7 @@ import Game from "@/game/Game";
 import type { Hooks, Input } from "@/game/hooks";
 import { Level } from "@/schema/level";
 import { loadLevel } from "@/lib/levelStore";
+import RuleSlot from "@/rules/RuleSlot";
 import demo from "../../../fixtures/level-demo.json";
 import s from "./play.module.css";
 
@@ -51,6 +52,7 @@ export default function PlayClient() {
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
       <div className={s.stage}><Game level={level} onReady={onReady} /></div>
+      <RuleSlot hooks={hooks} />
       <p className={s.help}>Arrow keys or WASD to move, Space to jump (tap for a small hop). Reach the flag, dodge the lava.</p>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (

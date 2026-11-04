@@ -1,0 +1,4 @@
+{
+  "sentence": "lava rises every 5 seconds",
+  "output_text": "{\"action\": {\"amount\": 50, \"type\": \"raise_lava\"}, \"error\": \"\", \"mode\": \"every\", \"ok\": true, \"text\": \"Lava rises every 5 seconds\", \"trigger\": {\"sec\": 5, \"target\": \"none\", \"type\": \"timer\"}}"
+}

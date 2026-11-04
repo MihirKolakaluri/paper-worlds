@@ -1,0 +1,4 @@
+{
+  "sentence": "give me a jetpack",
+  "output_text": "{\"action\":  {\"amount\": 0, \"type\": \"reset\"}, \"error\": \"I can't add jetpacks yet. Try: double speed when I clap\", \"mode\": \"once\", \"ok\": false, \"text\": \"Jetpack requested\", \"trigger\": {\"sec\": 0, \"target\": \"none\", \"type\": \"timer\"}}"
+}
