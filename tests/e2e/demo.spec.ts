@@ -18,7 +18,7 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-landing.png`, fullPage: true });
 
     await page.getByRole("link", { name: "Play this drawing" }).click();
-    await expect(page).toHaveURL(/demo=b/);
+    await expect(page).toHaveURL(/demo=a/);
     await expect(page.getByLabel("Type a rule")).toHaveAttribute("placeholder", "Try: double speed");
     const canvas = page.locator("canvas");
     await expect(canvas).toBeVisible({ timeout: 15_000 });
@@ -37,8 +37,8 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     await page.waitForTimeout(6000);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-rule.png` });
 
-    await page.getByRole("link", { name: "First drawing" }).click();
-    await expect(page).toHaveURL(/demo=a/);
+    await page.getByRole("link", { name: "Lava run" }).click();
+    await expect(page).toHaveURL(/demo=b/);
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
     await page.getByRole("link", { name: "← Home" }).click();
     await expect(page.getByRole("heading", { name: "Paper Worlds" })).toBeVisible();

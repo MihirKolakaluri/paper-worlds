@@ -8,11 +8,11 @@ export default function Home() {
       <h1 className={s.h1}>Paper Worlds</h1>
       <p className={s.lead}>Draw a game on paper. Move platforms with sticky notes. Change the rules as you play.</p>
       <div className={s.row}>
-        <Link className={s.btn} href="/play?demo=b">Play this drawing</Link>
+        <Link className={s.btn} href="/play?demo=a">Play this drawing</Link>
         <Link className={s.btnGhost} href="/make">Make your own</Link>
       </div>
       <figure className={s.drawing}>
-        <img src="/samples/b.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={741} />
+        <img src="/samples/a.jpg" alt="A pen drawing of a game level with platforms, red lava, a stick figure and a flag" width={1280} height={665} />
         <figcaption>Play this sample instantly. No camera or setup needed.</figcaption>
       </figure>
       <section className={s.how} aria-label="How it works">
