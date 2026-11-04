@@ -201,7 +201,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
             <ol className={s.steps}>
               <li>Put a blue or green note on your desk</li>
               <li>Move your hands away</li>
-              <li>{finding ? "Looking for it…" : "It shows up in the game by itself"}</li>
+              <li>{finding ? "SAM 3.1 is looking for it…" : "It shows up in the game by itself"}</li>
             </ol>
           )}
           {warnings.map(w => <p key={w} className={s.warn}>{w}</p>)}

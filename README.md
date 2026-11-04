@@ -1,6 +1,8 @@
 # Paper Worlds
 
-Draw a game on paper. Play it a few seconds later.
+**If you can draw it, you can play it.**
+
+Everyone has a game in their head. Making one takes code. Paper Worlds takes a pen.
 
 ![A pen drawing played as a game, reaching the flag](docs/demo.gif)
 

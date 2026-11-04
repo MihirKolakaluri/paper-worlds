@@ -109,7 +109,7 @@ export default function Snap() {
       <h1 className={s.h1}>Make your own</h1>
       <p className={s.lead}>Draw a game level on paper. Snap a photo. Play it.</p>
       {stage.kind === "reading" ? (
-        <div className={s.reading} role="status"><span className={s.spinner} /> Reading your drawing… this takes about 10 seconds.</div>
+        <div className={s.reading} role="status"><span className={s.spinner} /> Muse Spark is reading your drawing. This takes about 10 seconds.</div>
       ) : (
         <>
           {stage.kind === "error" && <div className={s.error} role="alert">{stage.message}</div>}

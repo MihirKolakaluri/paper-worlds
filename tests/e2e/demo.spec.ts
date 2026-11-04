@@ -11,8 +11,9 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     page.on("pageerror", e => errors.push(e.message));
     await page.setViewportSize({ width, height });
     await page.goto(BASE);
-    await expect(page.getByRole("heading", { name: "Paper Worlds" })).toBeVisible();
-    await expect(page.getByText("Move platforms with sticky notes")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "If you can draw it, you can play it." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Four Meta models. One piece of paper." })).toBeVisible();
+    for (const m of ["Muse Spark", "SAM 3.1", "Muse Wonder", "Muse Voice Transcribe"]) await expect(page.getByRole("heading", { name: m })).toBeVisible();
     const scroll = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(scroll).toBeLessThanOrEqual(0);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}-landing.png`, fullPage: true });
@@ -20,6 +21,7 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     await page.getByRole("link", { name: "Play this drawing" }).click();
     await expect(page).toHaveURL(/demo=a/);
     await expect(page.getByLabel("Type a rule")).toHaveAttribute("placeholder", "Try: double speed");
+    await expect(page.getByText("Drawn by hand. Now beat it.")).toBeVisible();
     const canvas = page.locator("canvas");
     await expect(canvas).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(2500);
@@ -41,7 +43,7 @@ for (const [name, width, height] of [["desktop", 1280, 800], ["phone", 390, 844]
     await expect(page).toHaveURL(/demo=b/);
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
     await page.getByRole("link", { name: "← Home" }).click();
-    await expect(page.getByRole("heading", { name: "Paper Worlds" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "If you can draw it, you can play it." })).toBeVisible();
     expect(errors).toEqual([]);
   });
 }

@@ -64,7 +64,10 @@ export default function PlayClient() {
       {level.warnings.length > 0 && !hideWarn && (
         <div className={s.warn}>{level.warnings[0]} <button onClick={() => setHideWarn(true)}>OK</button></div>
       )}
-      <div ref={stage} className={s.stage}><Game level={level} onReady={onReady} /></div>
+      <div ref={stage} className={s.stage}>
+        <Game level={level} onReady={onReady} />
+        <p className={s.intro}>{sample ? "Drawn by hand. Now beat it." : "You drew this. Now beat it."}</p>
+      </div>
       <RuleSlot hooks={hooks} presets={sample ? PRESETS : undefined} demo={!!sample} />
       {sample && <DemoMover hooks={hooks} level={level} stage={stage} />}
       {sample && (
