@@ -6,6 +6,7 @@ import type { Hooks, Input } from "@/game/hooks";
 import { Level } from "@/schema/level";
 import { loadLevel } from "@/lib/levelStore";
 import RuleSlot from "@/rules/RuleSlot";
+import MoverSlot from "@/tracking/MoverSlot";
 import demo from "../../../fixtures/level-demo.json";
 import DemoMover from "@/demo/DemoMover";
 import { SAMPLES, loadSample, sampleById } from "@/demo/samples";
@@ -72,6 +73,7 @@ export default function PlayClient() {
           <Link href="/make">Make your own</Link>
         </nav>
       )}
+      {!sample && <MoverSlot hooks={hooks} level={level} />}
       <p className={s.help}>Arrow keys or WASD to move, Space to jump (tap for a small hop). Reach the flag, dodge the lava.</p>
       <div className={s.pads}>{pad("left", "◀")}{pad("right", "▶")}<span className={s.grow} />{pad("jump", "⤒")}</div>
       {won && (

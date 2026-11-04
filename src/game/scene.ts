@@ -24,6 +24,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
   const hooks: Hooks = {
     input: { left: false, right: false, jump: false },
     setMoverTarget: (id, x, y) => withScene(s => s.setMoverTarget(id, x, y)),
+    setMoverAlpha: (id, a) => withScene(s => s.movers.get(id)?.body.setAlpha(a)),
     addMover: m => withScene(s => s.addMover(m)),
     removeMover: id => withScene(s => s.removeMover(id)),
     applyRule: r => withScene(s => s.applyRule(r)),
@@ -292,9 +293,9 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     addMover(m: Mover) {
       this.removeMover(m.id);
       const w = Math.max(2, m.shape[0]?.length ?? 4) * T, h = Math.max(1, m.shape.length) * T;
-      const rect = this.add.rectangle(m.pos.x, m.pos.y, w, h, 0x22c55e, 0.85) as Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
+      const rect = this.add.rectangle(m.pos.x, m.pos.y, w, h, /^#[0-9a-f]{6}$/i.test(m.color) ? parseInt(m.color.slice(1), 16) : 0x22c55e, 0.85) as Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
       this.moverGroup.add(rect);
-      rect.body.setAllowGravity(false).setImmovable(true);
+      rect.body.setAllowGravity(false).setImmovable(true).setFriction(1, 0); // a physics group defaults friction to 0, which would slide platforms out from under the player
       this.movers.set(m.id, { body: rect, tx: m.pos.x, ty: m.pos.y });
     }
     removeMover(id: string) { const m = this.movers.get(id); if (m) { m.body.destroy(); this.movers.delete(id); } }

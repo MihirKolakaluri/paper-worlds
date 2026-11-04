@@ -15,6 +15,8 @@ export type Input = { left: boolean; right: boolean; jump: boolean };
 
 export interface Hooks {
   setMoverTarget(id: string, x: number, y: number): void;
+  /** 1 is fully visible, 0 is invisible. Display only: a mover stays solid until removeMover. */
+  setMoverAlpha(id: string, alpha: number): void;
   addMover(m: Mover): void;
   removeMover(id: string): void;
   applyRule(rule: Rule): void;
