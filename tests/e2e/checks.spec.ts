@@ -107,7 +107,7 @@ test.describe("desktop", () => {
     test.setTimeout(70_000);
     await open(page, "/play?demo=a");
     const start = (await state(page)).x;
-    await page.getByPlaceholder(/Type a rule/).fill("restart the level once after 8 seconds");
+    await page.getByLabel("Type a rule").fill("restart the level once after 8 seconds");
     await page.getByRole("button", { name: "Add rule" }).click();
     await expect(page.getByRole("button", { name: /remove|undo|×/i }).first()).toBeVisible({ timeout: 25_000 });
     await page.locator("canvas").click({ position: { x: 5, y: 5 } });

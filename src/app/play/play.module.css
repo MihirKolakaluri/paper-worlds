@@ -15,6 +15,7 @@
 .pad:active { transform: translateY(2px); box-shadow: 0 0 0 #0003, 0 2px 6px #0002; }
 .grow { flex: 1; }
 @media (pointer: coarse) { .pads { display: flex; } .help { display: none; } }
+@media (max-width: 640px) { .wrap { height: auto; min-height: 100dvh; } .stage { flex: none; height: clamp(220px, 32dvh, 300px); } }
 .win { position: fixed; inset: 0; background: #0006; backdrop-filter: blur(3px); display: grid; place-items: center; padding: 16px; animation: fade .25s ease-out; }
 .card { background: var(--paper); color: var(--ink); border-radius: 8px; padding: 28px 32px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 20px 60px #0004; transform: rotate(-1.2deg); animation: pop .35s cubic-bezier(.2, 1.4, .4, 1); }
 .card h2 { font-family: var(--font-hand), system-ui; font-size: 46px; font-weight: 400; margin: 0 0 4px; }

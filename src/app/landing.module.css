@@ -1,6 +1,6 @@
 .main { max-width: 860px; margin: 0 auto; padding: 48px 16px; display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; }
 .h1 { font-size: clamp(40px, 9vw, 68px); margin: 0; letter-spacing: -0.02em; }
-.lead { font-size: 20px; margin: 0; opacity: .85; }
+.lead { font-size: 20px; margin: 0; opacity: .85; max-width: 640px; line-height: 1.4; text-wrap: balance; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .btn, .btnGhost { display: inline-block; padding: 14px 22px; border-radius: 14px; font-weight: 600; font-size: 17px; text-decoration: none; }
 .btn { background: #1d4ed8; color: #fff; }

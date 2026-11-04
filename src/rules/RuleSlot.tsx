@@ -100,7 +100,7 @@ export default function RuleSlot({ hooks, presets, demo = false }: Props) {
         <input
           ref={box} className={s.box} value={text} maxLength={MAX_SENTENCE} disabled={!engine}
           onChange={e => { setText(e.target.value); setError(""); }} onKeyDown={onBoxKey}
-          placeholder="Type a rule: make the lava rise every time I whistle" aria-label="Type a rule"
+          placeholder={demo ? "Try: double speed" : "Type a rule: make the lava rise every time I whistle"} aria-label="Type a rule"
           autoComplete="off" spellCheck={false} enterKeyHint="done"
         />
         <button className={s.add} disabled={busy || !text.trim() || !engine} onClick={release}>{busy ? "Thinking…" : "Add rule"}</button>

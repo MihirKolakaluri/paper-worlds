@@ -10,7 +10,7 @@ test("a typed rule compiles through Wonder and changes the game", async ({ page 
   await page.goto(`${BASE}/play?demo=a`);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(2500);
-  await page.getByPlaceholder(/Type a rule/).fill("make the lava rise every 2 seconds");
+  await page.getByLabel("Type a rule").fill("make the lava rise every 2 seconds");
   await page.getByRole("button", { name: "Add rule" }).click();
   await expect(page.getByRole("button", { name: /remove|undo|×/i }).first()).toBeVisible({ timeout: 25_000 });
 });

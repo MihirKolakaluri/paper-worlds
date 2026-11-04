@@ -6,7 +6,7 @@ Draw a game on paper. Play it a few seconds later.
 
 **Play it now: https://paper-worlds-flame.vercel.app**
 
-Press Try it now. You don't need paper or a camera or an account.
+Press Play this drawing. You don't need paper or a camera or an account.
 
 I built this for the Meta Global AI Developer Hackathon (Indie Developer track) with Muse Spark, SAM 3.1, Muse Wonder and Muse Voice Transcribe.
 
@@ -19,7 +19,7 @@ Then the paper keeps working while you play.
 - **Sticky notes are live platforms.** Put a bright note under the camera and it turns into a platform that follows your hand. Move it to catch yourself.
 - **Rules change the game.** Type or say something like "make the lava rise every time I whistle" and it happens.
 
-Try it now has two of my drawings ready to go. Your mouse or finger stands in for the sticky note there and that works from a laptop or a phone.
+The sample levels are two of my drawings ready to go. Your mouse or finger stands in for the sticky note there and that works from a laptop or a phone.
 
 ## How it works
 

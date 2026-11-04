@@ -1,7 +1,7 @@
 .slot { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .form { display: flex; gap: 8px; }
 .box { flex: 1; min-width: 0; height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; box-shadow: 0 1px 2px #0002, 0 2px 8px #0001; }
-.box::placeholder { color: var(--ink); opacity: .5; }
+.box::placeholder { color: #626777; opacity: 1; }
 .add, .clear, .preset, .sound { height: 40px; padding: 0 16px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .add { background: var(--ink); color: #fff; }
 .add:disabled { opacity: .45; cursor: default; }
