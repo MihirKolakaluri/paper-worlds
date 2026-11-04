@@ -26,7 +26,7 @@ describe("MoverSession", () => {
     expect(Mover_parse(m)).toBe(true);
     expect(m.pos.x).toBeCloseTo(320, 3);
     expect(m.pos.y).toBeCloseTo(160, 3);
-    expect(m.shape.length).toBe(7); // 40 camera px is 53 level px tall, 7 tiles
+    expect(m.shape.length).toBe(2); // a plank: always 2 tiles tall, however tall the note looks
     expect(m.shape[0].length).toBe(10); // and 80 wide
     expect(m.shape.flat().every(Boolean)).toBe(true);
     expect(m.color).toMatch(/^#/);
