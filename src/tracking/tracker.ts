@@ -70,7 +70,6 @@ export class Tracker {
     this.notes.push({ id, x, y, state: "tracking", alpha: 1, lostMs: 0, sig, minN: Math.max(6, (areaPx / (STEP * STEP)) * 0.15), fx: new OneEuro(), fy: new OneEuro(), lostAt: null, seenAt: -Infinity });
   }
   remove(id: string) { this.notes = this.notes.filter(n => n.id !== id); }
-  clear() { this.notes = []; }
   get(id: string): Track | undefined { return this.notes.find(n => n.id === id); }
   get all(): readonly (Track & { sig: Hsv })[] { return this.notes; }
   setSignature(id: string, sig: Hsv) { const n = this.notes.find(e => e.id === id); if (n) n.sig = sig; }

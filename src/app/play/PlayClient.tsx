@@ -32,7 +32,7 @@ export default function PlayClient() {
       loadSample(id).then(setLevel).catch(() => setLevel(Level.parse(demo)));
       return;
     }
-    setLevel(q.get("fixture") === "demo" ? Level.parse(demo) : loadLevel() ?? "none");
+    setLevel(loadLevel() ?? "none");
   }, []);
 
   const onReady = useCallback((h: Hooks) => {

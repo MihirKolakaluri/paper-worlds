@@ -217,11 +217,11 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
       fire({ type: "win" });
     }
 
-    resetLevel(cause?: Active) {
+    resetLevel() {
       this.won = false; this.lavaRise = 0; this.speedMul = 1; this.frozenUntil = 0;
       if (this.flipped) { this.flipped = false; this.physics.world.gravity.y = GRAVITY; this.setOneWay(); }
       this.extraTiles.forEach(([c, r]) => this.layer.removeTileAt(c, r)); this.extraTiles = []; this.drawExtra();
-      rearm(this.rules, this.time.now, r => this.timerMs(r), cause);
+      rearm(this.rules, this.time.now, r => this.timerMs(r));
       this.player.body.setAllowGravity(true);
       this.spawn();
       fire({ type: "start" });
@@ -287,7 +287,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         }
         case "speed": this.speedMul = clampSpeed(a.x); break;
         case "freeze_movers": this.frozenUntil = this.time.now + Math.min(30, a.sec) * 1000; break;
-        case "reset": this.time.delayedCall(0, () => this.resetLevel(active)); break;
+        case "reset": this.time.delayedCall(0, () => this.resetLevel()); break;
       }
     }
 

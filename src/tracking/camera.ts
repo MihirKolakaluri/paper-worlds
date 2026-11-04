@@ -45,5 +45,5 @@ export async function listCameras(): Promise<Cam[]> {
 }
 
 export function openCamera(deviceId: string): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, frameRate: { ideal: 60 } } });
+  return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId }, width: { ideal: 640 }, frameRate: { ideal: 60 } } });
 }

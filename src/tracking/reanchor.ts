@@ -53,7 +53,7 @@ type Deps = {
   capture(): Promise<Capture>;
   find(image: string, w: number, h: number): Promise<FindResult>;
   apply(boxes: Box[], cap: Capture): Applied;
-  onFire?(reason: "timer" | "lost"): void;
+  onFire?(): void;
 };
 
 export class ReanchorLoop {
@@ -86,7 +86,7 @@ export class ReanchorLoop {
     this.lastFire = now;
     this.busy = true;
     this.calls++;
-    this.d.onFire?.(lost ? "lost" : "timer");
+    this.d.onFire?.();
     void this.run(lost);
   }
 

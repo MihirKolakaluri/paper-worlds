@@ -7,11 +7,11 @@ export const clampSpeed = (x: number) => Math.max(0.5, Math.min(2.5, x));
 /** `raised` and `tiles` remember what this rule did, so × can take it back. */
 export type Active = { rule: Rule; fired: number; nextAt: number; raised?: number; tiles?: [number, number][] };
 
-/** After a level reset every rule starts again, except a once rule that caused the reset, which would loop for ever. */
-export function rearm(active: Active[], now: number, timerMs: (r: Rule) => number, cause?: Active) {
+/** After a level reset every rule starts again, except a used once reset, which would loop for ever. */
+export function rearm(active: Active[], now: number, timerMs: (r: Rule) => number) {
   for (const a of active) {
     a.raised = 0; a.tiles = [];
-    if (a === cause && a.rule.mode === "once") continue;
+    if (a.rule.action.type === "reset" && a.rule.mode === "once" && a.fired) continue;
     a.fired = 0; a.nextAt = now + timerMs(a.rule);
   }
 }

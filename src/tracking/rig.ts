@@ -136,17 +136,17 @@ export class Rig {
     this.lastT = v.currentTime;
     const W = PROC_W, H = Math.round(PROC_W * v.videoHeight / v.videoWidth);
     if (this.proc.width !== W || this.proc.height !== H) { this.proc.width = W; this.proc.height = H; }
-    this.pctx.drawImage(v, 0, 0, W, H);
 
     const t0 = performance.now();
     if (this.session.count) {
+      this.pctx.drawImage(v, 0, 0, W, H);
       const { lostMs, tracks } = this.session.step(this.pctx.getImageData(0, 0, W, H).data, W, H, now);
       this.tracks = tracks;
       this.loop.tick(now, lostMs);
     } else this.tracks = [];
     this.msAvg = this.msAvg * 0.9 + (performance.now() - t0) * 0.1;
 
-    if (this.view) this.draw(this.view, W, H);
+    if (this.view?.getClientRects().length) this.draw(this.view, W, H); // no rects = the panel is hidden
     this.frames++;
     if (now - this.fpsAt >= 250) {
       this.fps = this.frames * 1000 / (now - this.fpsAt);

@@ -139,16 +139,22 @@ describe("spawnSpot", () => {
 });
 
 describe("rearm after a level reset", () => {
-  const rule = (id: string, mode: "once" | "every"): Rule => ({ id, text: id, mode, trigger: { type: "timer", sec: 10 }, action: { type: "reset" } });
-  it("a once rule that caused the reset stays used, or it would restart the level for ever", () => {
-    const cause: Active = { rule: rule("a", "once"), fired: 1, nextAt: 0 };
-    rearm([cause], 5000, () => 10_000, cause);
-    expect(cause.fired).toBe(1);
+  const timer = { type: "timer", sec: 10 } as const;
+  const reset = (id: string, mode: "once" | "every"): Rule => ({ id, text: id, mode, trigger: timer, action: { type: "reset" } });
+  const lava: Rule = { id: "l", text: "l", mode: "once", trigger: timer, action: { type: "raise_lava", px: 8 } };
+  it("a used once reset stays used, or it would restart the level for ever", () => {
+    const a: Active = { rule: reset("a", "once"), fired: 1, nextAt: 0 };
+    rearm([a], 5000, () => 10_000);
+    expect(a.fired).toBe(1);
   });
-  it("every other rule starts again", () => {
-    const other: Active = { rule: rule("b", "once"), fired: 1, nextAt: 0 }, every: Active = { rule: rule("c", "every"), fired: 3, nextAt: 0 };
-    rearm([other, every], 5000, () => 10_000, every);
-    expect(other).toMatchObject({ fired: 0, nextAt: 15_000 });
-    expect(every).toMatchObject({ fired: 0, nextAt: 15_000 });
+  it("two once resets can't keep starting each other", () => {
+    const a: Active = { rule: reset("a", "once"), fired: 1, nextAt: 0 }, b: Active = { rule: reset("b", "once"), fired: 1, nextAt: 0 };
+    rearm([a, b], 5000, () => 10_000);
+    expect([a.fired, b.fired]).toEqual([1, 1]);
+  });
+  it("a once reset that hasn't fired yet, and every other rule, start again", () => {
+    const waiting: Active = { rule: reset("w", "once"), fired: 0, nextAt: 0 }, once: Active = { rule: lava, fired: 1, nextAt: 0 }, every: Active = { rule: reset("c", "every"), fired: 3, nextAt: 0 };
+    rearm([waiting, once, every], 5000, () => 10_000);
+    for (const a of [waiting, once, every]) expect(a).toMatchObject({ fired: 0, nextAt: 15_000 });
   });
 });
