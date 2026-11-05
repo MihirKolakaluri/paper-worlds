@@ -61,8 +61,8 @@ test("flipped gravity can't trap a player in a falling loop", async ({ page }) =
   await page.goto(`${BASE}/play?demo=a`);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(2500);
-  await page.getByRole("button", { name: /Flip gravity every 6 seconds/ }).click();
-  await page.waitForTimeout(11_000);
+  await page.getByRole("button", { name: /Flip gravity every 20 seconds/ }).click();
+  await page.waitForTimeout(26_000);
   const falls = Number((await page.getByText(/^Falls:/).innerText()).replace(/\D/g, ""));
   console.log("FLIPFALLS", falls);
   expect(falls).toBeLessThanOrEqual(2);

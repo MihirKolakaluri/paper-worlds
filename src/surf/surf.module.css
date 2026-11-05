@@ -5,3 +5,6 @@
 .fill { height: 100%; background: #1d4ed8; border-radius: 999px; transition: width .3s linear; }
 .keys { display: flex; justify-content: center; gap: 24px; font-size: 14px; font-weight: 600; color: var(--fg); }
 .keys kbd { padding: 3px 7px; border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 1px 0 #0003; font: inherit; }
+.levels { display: flex; justify-content: center; gap: 6px; }
+.levels button { padding: 6px 14px; border: 0; border-radius: 999px; background: var(--paper); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px #0002; }
+.levels button[aria-pressed="true"] { background: #1d4ed8; color: #fff; }

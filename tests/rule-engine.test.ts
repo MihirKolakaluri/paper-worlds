@@ -9,7 +9,7 @@ function fakeHooks() {
   const events = new Set<(e: HudEvent) => void>();
   const hooks: Hooks = {
     input: { left: false, right: false, jump: false },
-    setMoverAlpha: vi.fn(), setRide: vi.fn(), setMoverTarget: vi.fn(), addMover: vi.fn(), removeMover: vi.fn(),
+    setMoverAlpha: vi.fn(), setRide: vi.fn(), setDifficulty: vi.fn(), setMoverTarget: vi.fn(), addMover: vi.fn(), removeMover: vi.fn(),
     applyRule: vi.fn(), removeRule: vi.fn(), emit: vi.fn(), restart: vi.fn(),
     onTick: () => () => {},
     onEvent: cb => { events.add(cb); return () => events.delete(cb); },

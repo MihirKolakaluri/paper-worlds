@@ -20,6 +20,8 @@ export interface Hooks {
   addMover(m: Mover): void;
   /** The hero rides this mover instead of walking, and scribbles start. Null hands control back to the keys. */
   setRide(id: string | null): void;
+  /** Asteroid Surf: 1 is normal, more is harder. */
+  setDifficulty(level: number): void;
   removeMover(id: string): void;
   applyRule(rule: Rule): void;
   removeRule(id: string): void;

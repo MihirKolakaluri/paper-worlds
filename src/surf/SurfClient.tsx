@@ -12,6 +12,7 @@ import p from "@/app/play/play.module.css";
 import s from "./surf.module.css";
 
 const BEST_KEY = "pw-surf-best";
+const LEVELS: [string, number][] = [["Easy", 0.7], ["Normal", 1], ["Hard", 1.6]];
 
 export default function SurfClient() {
   const [level, setLevel] = useState<Level | null>(null);
@@ -23,6 +24,7 @@ export default function SurfClient() {
   const [won, setWon] = useState(false);
   const [note, setNote] = useState(false);
   const [best, setBest] = useState(0);
+  const [level_, setLevel_] = useState(1);
   const dodgedNow = useRef(0);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -85,6 +87,9 @@ export default function SurfClient() {
         <p className={p.intro}>Surf to the end. Dodge the asteroids.</p>
       </div>
       <MoverSlot hooks={hooks} level={level} />
+      <div className={s.levels} role="group" aria-label="Difficulty">
+        {LEVELS.map(([name, n]) => <button key={name} aria-pressed={level_ === n} onClick={e => { setLevel_(n); hooks?.setDifficulty(n); hooks?.restart(); e.currentTarget.blur(); }}>{name}</button>)}
+      </div>
       <div className={s.keys}>
         <span>{note ? "Slide your note to steer" : "Move your mouse or finger to steer"}</span>
         <span className={p.desktop}><kbd>Space</kbd> Jump</span>

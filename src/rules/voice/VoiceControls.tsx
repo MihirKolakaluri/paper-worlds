@@ -49,7 +49,7 @@ export default function VoiceControls({ engine, onText, onError, onMicChange, ne
   const calibrate = useCallback(() => {
     if (!live.current) return;
     setState("calibrating"); setNote("Stay quiet for 2 seconds…");
-    live.current.detector.calibrate(CALIBRATE_MS, () => { setState("on"); setNote("Listening for whistles and double claps."); });
+    live.current.detector.calibrate(CALIBRATE_MS, () => { setState("on"); setNote("Listening. Clap twice, loud and quick."); });
   }, [setState]);
 
   const turnOn = async () => {

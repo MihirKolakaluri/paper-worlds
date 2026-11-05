@@ -92,10 +92,10 @@ test.describe("desktop", () => {
   });
 
   test("undoing a flip preset really puts gravity back", async ({ page }) => {
-    test.setTimeout(40_000);
+    test.setTimeout(70_000);
     await open(page, "/play?demo=a");
-    await page.getByRole("button", { name: /Flip gravity every 6 seconds/ }).click();
-    await page.waitForFunction(() => (window as unknown as { __pw: S }).__pw.gravityFlipped, null, { timeout: 12_000 });
+    await page.getByRole("button", { name: /Flip gravity every 20 seconds/ }).click();
+    await page.waitForFunction(() => (window as unknown as { __pw: S }).__pw.gravityFlipped, null, { timeout: 40_000 });
     await page.getByRole("button", { name: /remove|undo|×/i }).first().click();
     await page.waitForTimeout(400);
     expect((await state(page)).gravityFlipped).toBe(false);

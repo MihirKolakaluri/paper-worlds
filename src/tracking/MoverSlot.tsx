@@ -153,7 +153,7 @@ function Slot({ hooks, level }: { hooks: Hooks | null; level: Level }) {
     <div className={s.bar} onClick={release}>
       {phase === "live" && (
         <div className={s.note} aria-live="polite">
-          {lost ? <b>Looking for your note…</b> : <><b>Your note is your controller</b><span>Slide it to steer. Dodge the asteroids.</span></>}
+          {lost ? <><b>Can&apos;t see your note</b><span>Move your hand so the camera can see it</span></> : <><b>Your note is your controller</b><span>Slide it to steer. Dodge the asteroids.</span></>}
         </div>
       )}
       {phase === "live" && <button className={s.ghost} onClick={turn}>Wrong way? Turn picture</button>}

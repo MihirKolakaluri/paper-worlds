@@ -33,6 +33,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     setMoverAlpha: (id, a) => withScene(s => s.movers.get(id)?.body.setAlpha(a)),
     addMover: m => withScene(s => s.addMover(m)),
     setRide: id => withScene(s => s.setRide(id)),
+    setDifficulty: n => withScene(s => { s.difficulty = n; }),
     removeMover: id => withScene(s => s.removeMover(id)),
     applyRule: r => withScene(s => s.applyRule(r)),
     removeRule: id => withScene(s => s.removeRule(id)),
@@ -65,6 +66,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
     scribbleCount = 0;
     airborne = false; // jumped off the plank on purpose
     surfMs = 0;
+    difficulty = 1;
     surfPct = -1;
     surfHits = 0;
     dashes: Phaser.GameObjects.Rectangle[] = [];
@@ -377,7 +379,7 @@ export function makeGame(P: PhaserNS, parent: HTMLElement, level: Level): { game
         else p.setVelocityX(vx * RUN * this.speedMul);
         if (vx) p.setFlipX(vx < 0);
         if (plank && level.surf && time >= this.nextScribbleAt) {
-          const wave = scribbleWave(time - this.rideStart);
+          const wave = scribbleWave(time - this.rideStart, this.difficulty);
           const s = this.scribbles.create(W + 20, scribbleY(++this.scribbleCount, Math.random(), p.y, H), "scribble") as Phaser.Physics.Arcade.Sprite;
           s.setDepth(6).setVelocityX(-wave.speed).setAngularVelocity(240);
           (s.body as Phaser.Physics.Arcade.Body).setCircle(12, 4, 4);

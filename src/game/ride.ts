@@ -10,9 +10,9 @@ export function rideVelocity(plankX: number, heroX: number) {
 }
 
 /** How often scribbles come and how fast, after this long riding. */
-export function scribbleWave(elapsedMs: number) {
+export function scribbleWave(elapsedMs: number, difficulty = 1) {
   const t = Math.min(1, elapsedMs / RAMP_MS);
-  return { gapMs: Math.round(lerp(1800, 750, t)), speed: Math.round(lerp(200, 460, t)) };
+  return { gapMs: Math.round(lerp(1400, 520, t) / difficulty), speed: Math.round(lerp(260, 560, t) * difficulty) };
 }
 
 /** Where a scribble comes in. `n` counts them and `rand` is 0 to 1. */

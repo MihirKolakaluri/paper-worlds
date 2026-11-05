@@ -23,3 +23,11 @@ describe("scribbles", () => {
     expect(scribbleY(4, 1, 200, 600)).toBe(560);
   });
 });
+
+describe("difficulty", () => {
+  it("hard means more asteroids and faster ones", () => {
+    const n = scribbleWave(0), h = scribbleWave(0, 1.6), e = scribbleWave(0, 0.7);
+    expect(h.speed).toBeGreaterThan(n.speed); expect(h.gapMs).toBeLessThan(n.gapMs);
+    expect(e.speed).toBeLessThan(n.speed); expect(e.gapMs).toBeGreaterThan(n.gapMs);
+  });
+});

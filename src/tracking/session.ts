@@ -62,17 +62,13 @@ export class MoverSession {
   private sync(t: Track) {
     const n = this.notes.get(t.id), H = this.H;
     if (!n || !H) return;
-    if (t.state === "gone") {
-      if (n.present) { this.hooks.removeMover(t.id); n.present = false; }
-      return;
-    }
+    if (t.state !== "tracking") return; // a covered note leaves the plank where it was, so the player isn't dropped
     if (t.state === "tracking") {
       const [x, y] = toLevel(H, t.x, t.y);
       n.mover.pos = this.clamp(x, y, n.w, n.h);
       if (!n.present) { this.hooks.addMover(n.mover); n.present = true; n.alpha = 1; this.hooks.setMoverAlpha(t.id, 1); }
       this.hooks.setMoverTarget(t.id, n.mover.pos.x, n.mover.pos.y);
     }
-    if (n.alpha !== t.alpha) { n.alpha = t.alpha; this.hooks.setMoverAlpha(t.id, t.alpha); }
   }
 
   private clamp(x: number, y: number, w: number, h: number) {

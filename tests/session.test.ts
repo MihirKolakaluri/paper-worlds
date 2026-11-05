@@ -47,24 +47,18 @@ describe("MoverSession", () => {
     const x = hooks.setMoverTarget.mock.lastCall![1];
     expect(x).toBeLessThanOrEqual(LW - 40);
   });
-  it("hand over the note: holds, fades, removes, then adds it back where it reappears", () => {
+  it("hand over the note: the plank stays exactly where it was, then follows again when the note reappears", () => {
     const { s, hooks } = make();
     s.addNotes([box(160, 120)], scene(160, 120));
     s.step(scene(160, 120).data, 320, 240, 0);
-    const none = frame(320, 240, WHITE).data;
-    expect(s.step(none, 320, 240, 400).lostMs).toBe(400);
+    const moves = hooks.setMoverTarget.mock.calls.length;
+    const empty = frame(320, 240, WHITE).data;
+    for (let t = 100; t <= 2000; t += 100) s.step(empty, 320, 240, t);
     expect(hooks.removeMover).not.toHaveBeenCalled();
-    s.step(none, 320, 240, 750);
-    expect(hooks.setMoverAlpha.mock.lastCall![1]).toBeCloseTo(0.5, 1);
-    s.step(none, 320, 240, 1100);
-    expect(hooks.removeMover).toHaveBeenCalledWith("note-1");
-    hooks.addMover.mockClear();
-    s.step(none, 320, 240, 1200);
-    expect(hooks.removeMover).toHaveBeenCalledTimes(1);
-    s.step(scene(100, 60).data, 320, 240, 1500);
-    expect(hooks.addMover).toHaveBeenCalledTimes(1);
-    expect(hooks.addMover.mock.calls[0][0].pos.x).toBeCloseTo(200, -1);
-    expect(hooks.setMoverAlpha.mock.lastCall![1]).toBe(1);
+    expect(hooks.setMoverAlpha).not.toHaveBeenCalled();
+    expect(hooks.setMoverTarget.mock.calls.length).toBe(moves);
+    s.step(scene(200, 100).data, 320, 240, 2100);
+    expect(hooks.setMoverTarget.mock.calls.length).toBeGreaterThan(moves);
   });
   it("find again skips notes it already has, and adds the new one", () => {
     const { s, hooks } = make();
